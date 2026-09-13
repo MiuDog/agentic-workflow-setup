@@ -3,7 +3,7 @@ name: test-driven-development
 description: Author the minimal deterministic code checks for an accepted risky BUILD slice as an independent Test Author. Use for requested tests, regressions, persistence or transaction risk, cross-language contracts, or behavior humans cannot reliably verify; skip sensory evaluation and routine implementation.
 license: MIT
 metadata:
-  version: "0.3.0"
+  version: "0.3.1"
 ---
 
 # Test-driven development

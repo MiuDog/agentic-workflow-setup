@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-09-14
+
+### Fixed
+- GitHub Actions 的 checkout 與 Node setup 升到官方 Node 24 runtime major，移除 Node 20 action runtime 的棄用警告；套件仍以 Node.js 20 執行相容性測試。
+
 ## [0.3.0] - 2026-09-14
 
 ### Added

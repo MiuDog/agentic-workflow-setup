@@ -1,6 +1,6 @@
 {
 	"name": "agentic-workflow-setup",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"description": "Portable intent-routed DEFINE, PLAN, BUILD, VERIFY, and lean-development skills with measurable local evaluation",
 	"type": "module",
 	"bin": {

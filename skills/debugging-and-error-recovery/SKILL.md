@@ -3,7 +3,7 @@ name: debugging-and-error-recovery
 description: Diagnose a reproducible failed code check or unexpected program behavior, then make an authorized bounded fix using Red → Yellow → minimal Green fallback. Use only after a failure exists; skip routine verification, initial implementation, and sensory-quality review.
 license: MIT
 metadata:
-  version: "0.3.0"
+  version: "0.3.1"
 ---
 
 # Debugging and error recovery

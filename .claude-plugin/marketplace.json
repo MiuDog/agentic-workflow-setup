@@ -8,7 +8,7 @@
 			"name": "agentic-workflow-setup",
 			"source": ".",
 			"description": "Intent-routed development lifecycle skills with bounded context and measurable local evaluation.",
-			"version": "0.3.0"
+			"version": "0.3.1"
 		}
 	]
 }

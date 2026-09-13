@@ -3,7 +3,7 @@ name: incremental-implementation
 description: Implement one accepted, implementation-ready module slice inside its Task Packet write boundary. Use for BUILD after product and architecture decisions are fixed; skip unresolved design, test-author-only work, and failure diagnosis.
 license: MIT
 metadata:
-  version: "0.3.0"
+  version: "0.3.1"
 ---
 
 # Incremental implementation

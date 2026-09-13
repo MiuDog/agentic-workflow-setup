@@ -3,7 +3,7 @@ name: spec-driven-development
 description: Define an unresolved product or small-system idea as one accepted current specification before architecture or implementation. Use for new behavior with open product decisions; skip accepted or implementation-ready work.
 license: MIT
 metadata:
-  version: "0.3.0"
+  version: "0.3.1"
 ---
 
 # Spec-driven development

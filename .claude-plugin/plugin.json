@@ -1,6 +1,6 @@
 {
 	"name": "agentic-workflow-setup",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"description": "Intent-routed DEFINE, PLAN, BUILD, VERIFY, and lean-context skills with measurable local evaluation.",
 	"author": {
 		"name": "MiuDog"

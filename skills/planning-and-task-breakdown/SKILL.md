@@ -3,7 +3,7 @@ name: planning-and-task-breakdown
 description: Design or maintain one module's architecture and current-stage slices from an accepted READY specification. Use for architecture or task breakdown; skip unresolved product intent and implementation-ready work.
 license: MIT
 metadata:
-  version: "0.3.0"
+  version: "0.3.1"
 ---
 
 # Planning and task breakdown

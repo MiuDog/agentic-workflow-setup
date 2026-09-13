@@ -2,7 +2,7 @@
 
 一套正在重製的可攜式 Agent 工作制度。它把使用者決策轉成精簡、可交接的現行規格，並以明確的模組邊界、角色隔離與按風險擴張的驗證尺度支援後續開發。
 
-0.3.0 提供可用的 DEFINE → PLAN → BUILD → VERIFY 生命週期，以及跨階段的低上下文管理。七個舊版 catch-all skills 已退出安裝內容；每個新版 skill 只有一個可辨識 owner，並以案例與本機 registry 累積後續保留證據。
+0.3.1 提供可用的 DEFINE → PLAN → BUILD → VERIFY 生命週期，以及跨階段的低上下文管理。七個舊版 catch-all skills 已退出安裝內容；每個新版 skill 只有一個可辨識 owner，並以案例與本機 registry 累積後續保留證據。
 
 ## 安裝
 

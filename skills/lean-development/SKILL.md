@@ -3,7 +3,7 @@ name: lean-development
 description: Reduce controllable development context through current-truth capsules, bounded retrieval, low-coordination delegation, and evidence-scaled verification. Use for long sessions, handoffs, context pressure, or workflow-cost reduction; skip ordinary small edits that already have sufficient context.
 license: MIT
 metadata:
-  version: "0.3.0"
+  version: "0.3.1"
 ---
 
 # Lean development
