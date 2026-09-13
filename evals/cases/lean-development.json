@@ -1,0 +1,179 @@
+{
+	"$schema": "../case.schema.json",
+	"schema_version": 1,
+	"skill": {
+		"name": "lean-development",
+		"path": "skills/lean-development/SKILL.md"
+	},
+	"purpose": "Long-running development preserves current truth and full scope while reducing context reconstruction, coordination, and unnecessary verification.",
+	"owner": "Cross-phase context, handoff, delegation-cost, and verification-scale optimization.",
+	"non_goals": [
+		"Product definition",
+		"Module architecture ownership",
+		"Feature implementation",
+		"Visual design convergence"
+	],
+	"cases": [
+		{
+			"id": "LEAN-P1",
+			"kind": "positive",
+			"mode": "routing",
+			"prompt": "這個長 session 已累積大量舊決策，請壓縮成可交接的 current-truth capsule 並控制下一階段閱讀量。",
+			"expected_owner": "lean-development",
+			"selection_rule": "exact",
+			"checks": [
+				{
+					"id": "select-lean-owner",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "Lean development owns explicit context-pressure and handoff optimization."
+				},
+				{
+					"id": "preserve-current-truth",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The capsule retains all still-valid requirements, boundaries, evidence, and next work while removing superseded detail."
+				}
+			]
+		},
+		{
+			"id": "LEAN-P2",
+			"kind": "positive",
+			"mode": "routing",
+			"prompt": "請設計低溝通的 subagent Task Packet 與 milestone checkpoint，避免主 agent 頻繁追問。",
+			"expected_owner": "lean-development",
+			"selection_rule": "exact",
+			"checks": [
+				{
+					"id": "select-lean-owner",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "Lean development owns explicit delegation and coordination-cost reduction."
+				},
+				{
+					"id": "avoid-chatty-coordination",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The worker receives one bounded packet and communicates only milestones, blockers, and final evidence."
+				}
+			]
+		},
+		{
+			"id": "LEAN-P3",
+			"kind": "positive",
+			"mode": "routing",
+			"prompt": "目前每次小改動都跑全量測試，請依證據重新設計更精簡的驗證尺度與升級條件。",
+			"expected_owner": "lean-development",
+			"selection_rule": "exact",
+			"checks": [
+				{
+					"id": "select-lean-owner",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "Lean development owns workflow-level verification cost reduction."
+				},
+				{
+					"id": "scale-tests-by-risk",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "Verification starts at the affected path and expands only for failure, a release gate, explicit request, or unbounded evidence."
+				}
+			]
+		},
+		{
+			"id": "LEAN-N1",
+			"kind": "negative",
+			"mode": "routing",
+			"prompt": "README 有一個明確錯字，請直接修正並讀回確認。",
+			"expected_owner": null,
+			"selection_rule": "exclude-target",
+			"checks": [
+				{
+					"id": "exclude-lean-owner",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "A small edit with sufficient context proceeds directly without loading workflow optimization."
+				}
+			]
+		},
+		{
+			"id": "LEAN-N2",
+			"kind": "negative",
+			"mode": "routing",
+			"prompt": "我只知道想做資料管理工具，還沒決定使用者、核心流程或第一版範圍。",
+			"expected_owner": "spec-driven-development",
+			"selection_rule": "exclude-target",
+			"checks": [
+				{
+					"id": "route-product-definition",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "Unresolved product intent routes to DEFINE rather than context optimization."
+				}
+			]
+		},
+		{
+			"id": "LEAN-C1",
+			"kind": "collision",
+			"mode": "routing",
+			"prompt": "規格已 READY，請根據 capability horizon 設計 module architecture 與目前 stage slices，並保持文件精簡。",
+			"expected_owner": "planning-and-task-breakdown",
+			"selection_rule": "exclude-target",
+			"checks": [
+				{
+					"id": "route-plan-owner",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "Architecture planning remains owned by PLAN even when concise context is requested incidentally."
+				}
+			]
+		},
+		{
+			"id": "LEAN-B1",
+			"kind": "behavior",
+			"mode": "behavior",
+			"prompt": "長期開發已跨 DEFINE 與 PLAN，舊對話包含被取代決策。請為下一個 BUILD session 建立有界交接：保留目標、P1、module contract revision、allowed/protected paths、當前 slice、預估、milestones 與驗證 evidence；總可控上下文目標 6000 tokens，不縮減交付功能，也不要派 agent 做摘要。",
+			"expected_owner": "lean-development",
+			"selection_rule": "exact",
+			"checks": [
+				{
+					"id": "replace-stale-context",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The result produces one current capsule and removes superseded detail instead of appending another history layer."
+				},
+				{
+					"id": "retain-full-outcome",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "Context reduction preserves the complete accepted outcome, P1 blockers, contracts, boundaries, and evidence."
+				},
+				{
+					"id": "bound-next-session-reading",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The next session is directed to project instructions, the capsule, the active module contract, and only slice-specific sources."
+				},
+				{
+					"id": "avoid-summary-delegation",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The current owner performs the one needed compaction without a separate summary agent or repeated updates."
+				}
+			]
+		}
+	]
+}

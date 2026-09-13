@@ -12,14 +12,66 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      # 套組自檢：frontmatter 合規、SKILL.md ≤120 行、markdown 連結存在、MCP 範例一致
+      # 套組自檢：frontmatter 合規、膨脹訊號、markdown 連結存在、MCP 範例一致
       - run: node scripts/validate.mjs
+      # 形式化 task 成本與校準公式的零資料庫自測
+      - run: node scripts/analyze-task-registry.mjs self-test
+      # 本機 registry：runner ingest、冪等、獨立 finalize、semantic validation 與衝突拒絕
+      - run: npm run test:registry
+      # BUILD scope gate：允許 module change，拒絕跨 module 與 protected architecture change
+      - run: npm run test:scope
+      # Eval runner protocol：不呼叫模型，只驗證 baseline/treatment process 與 skill exposure 隔離
+      - run: |
+          set -e
+          E=$(mktemp -d)
+          node scripts/run-evals.mjs --case SDD-B1 --adapter evals/fixtures/runner/protocol-adapter.mjs --out "$E/results"
+          node -e "const p=require('node:path');const s=require('$E/results/summary.json');const pair=s.pairs[0];const b=require(p.join('$E/results',pair.baseline.request_path));const t=require(p.join('$E/results',pair.treatment.request_path));const expected=s.skill_catalog.installed_names.length;if(s.pairs.length!==1||pair.baseline.skill_bytes!==0||pair.treatment.skill_bytes===0||pair.execution_parity.status!=='pass'||b.skills.some(x=>x.name===s.skill.name)||!b.skills.some(x=>x.name==='planning-and-task-breakdown')||b.skills.length!==expected-1||t.skills.length!==expected)process.exit(1)"
       # 安裝器端到端自測：dry-run → 實裝 → verify → 冪等重跑 → uninstall
       - run: |
           set -e
           T=$(mktemp -d)
-          node setup.mjs --target "$T" --dry-run
-          node setup.mjs --target "$T" --verify
+          node setup.mjs --target "$T" --platforms codex,claude,gemini,antigravity --dry-run
+          node setup.mjs --target "$T" --platforms codex,claude,gemini,antigravity --verify
           node setup.mjs --target "$T" | grep "複製 0 檔"   # 冪等：第二次必須零複製
+          node setup.mjs --target "$T" --platforms codex,claude,gemini,antigravity --tools playwright
+          node -e "const c=require('$T/.mcp.json');if(!c.mcpServers.playwright)process.exit(1)"
+          node -e "const c=require('$T/.gemini/settings.json');if(!c.mcpServers.playwright)process.exit(1)"
+          node -e "const c=require('$T/.agents/mcp_config.json');if(!c.mcpServers.playwright)process.exit(1)"
+          grep -F '[mcp_servers.playwright]' "$T/.codex/config.toml"
+          for S in spec-driven-development planning-and-task-breakdown incremental-implementation test-driven-development debugging-and-error-recovery lean-development; do test -f "$T/.claude/skills/$S/SKILL.md"; done
           node setup.mjs --target "$T" --uninstall
-          test ! -d "$T/.claude/skills/agent-entry"          # 確認已移除
+          test ! -f "$T/.claude/skills/spec-driven-development/SKILL.md"
+          test ! -d "$T/.claude/skills/agent-entry"          # 舊 skill 不得回流
+      # User scope：隔離 HOME，確認全域路徑與不建立專案入口檔
+      - run: |
+          set -e
+          H=$(mktemp -d)
+          HOME="$H" node setup.mjs --scope user --platforms codex,claude,gemini,antigravity --verify
+          test -f "$H/.agents/skills/spec-driven-development/SKILL.md"
+          test -f "$H/.claude/skills/incremental-implementation/SKILL.md"
+          test -f "$H/.gemini/config/skills/lean-development/SKILL.md"
+          test ! -f "$H/AGENTS.md"
+          HOME="$H" node setup.mjs --scope user --platforms codex,claude,gemini,antigravity --uninstall
+          test ! -d "$H/.agents/skills/spec-driven-development"
+
+  windows-installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - shell: pwsh
+        run: |
+          $target = Join-Path $env:RUNNER_TEMP 'agentic-workflow-e2e'
+          node setup.mjs --target $target --platforms codex,antigravity --tools playwright --verify
+          $config = Get-Content (Join-Path $target '.agents/mcp_config.json') -Raw | ConvertFrom-Json
+          if (-not $config.mcpServers.playwright) { throw 'Playwright MCP was not installed' }
+          if ($config.mcpServers.playwright.command -ne 'cmd') { throw 'Windows wrapper is missing' }
+          @('spec-driven-development', 'planning-and-task-breakdown', 'incremental-implementation', 'test-driven-development', 'debugging-and-error-recovery', 'lean-development') | ForEach-Object {
+            if (-not (Test-Path (Join-Path $target ".agents/skills/$_/SKILL.md"))) { throw "Skill was not installed: $_" }
+          }
+          $toml = Get-Content (Join-Path $target '.codex/config.toml') -Raw
+          if ($toml -notmatch '\[mcp_servers\.playwright\]') { throw 'Codex MCP TOML was not installed' }
+          node setup.mjs --target $target --platforms codex,antigravity --uninstall
+          if (Test-Path (Join-Path $target '.agents/skills/spec-driven-development')) { throw 'Uninstall left managed skill files behind' }

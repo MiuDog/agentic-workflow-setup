@@ -1,0 +1,7 @@
+interface:
+  display_name: "Lean development"
+  short_description: "Reduce context, coordination, and verification cost"
+  brand_color: "#2563EB"
+  default_prompt: "Use $lean-development to reduce this task's context and coordination cost without shrinking its outcome."
+policy:
+  allow_implicit_invocation: true

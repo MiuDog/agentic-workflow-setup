@@ -1,0 +1,7 @@
+interface:
+  display_name: "Planning and task breakdown"
+  short_description: "Design one module and plan only its current stage"
+  brand_color: "#2563EB"
+  default_prompt: "Use $planning-and-task-breakdown to design this module and split only the accepted current stage."
+policy:
+  allow_implicit_invocation: true

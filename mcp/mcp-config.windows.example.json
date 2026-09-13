@@ -1,19 +1,8 @@
 {
-  "mcpServers": {
-    "sequential-thinking": {
-      "command": "cmd",
-      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-sequential-thinking"]
-    },
-    "memory": {
-      "command": "cmd",
-      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-memory"],
-      "env": {
-        "MEMORY_FILE_PATH": "C:\\<絕對路徑>\\mcp-memory.json"
-      }
-    },
-    "context7": {
-      "command": "cmd",
-      "args": ["/c", "npx", "-y", "@upstash/context7-mcp"]
-    }
-  }
+	"mcpServers": {
+		"playwright": {
+			"command": "cmd",
+			"args": ["/c", "npx", "-y", "@playwright/mcp@0.0.80", "--isolated", "--timeout-idle=300000"]
+		}
+	}
 }

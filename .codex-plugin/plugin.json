@@ -1,0 +1,37 @@
+{
+	"name": "agentic-workflow-setup",
+	"version": "0.3.0",
+	"description": "Intent-routed DEFINE, PLAN, BUILD, VERIFY, and lean-context skills with measurable local evaluation.",
+	"author": {
+		"name": "MiuDog",
+		"url": "https://github.com/MiuDog"
+	},
+	"homepage": "https://github.com/MiuDog/agentic-workflow-setup",
+	"repository": "https://github.com/MiuDog/agentic-workflow-setup",
+	"license": "MIT",
+	"keywords": [
+		"agent-skills",
+		"specification",
+		"planning",
+		"evaluation"
+	],
+	"skills": "./skills/",
+	"interface": {
+		"displayName": "Agentic Workflow Setup",
+		"shortDescription": "Run bounded, evidence-driven development lifecycles.",
+		"longDescription": "Define product intent, plan one module stage, implement bounded slices, author independent risk-based tests, debug concrete failures, and reduce context cost with measurable workflow evidence.",
+		"developerName": "MiuDog",
+		"category": "Developer Tools",
+		"capabilities": [
+			"Instructions"
+		],
+		"websiteURL": "https://github.com/MiuDog/agentic-workflow-setup",
+		"defaultPrompt": [
+			"Turn my rough product idea into a release-ready module specification.",
+			"Plan one stage of this module from its accepted specification.",
+			"Implement this accepted Task Packet without crossing its module boundary.",
+			"Diagnose this reproducible failure using bounded code evidence."
+		],
+		"brandColor": "#2563EB"
+	}
+}

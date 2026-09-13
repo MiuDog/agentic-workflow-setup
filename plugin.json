@@ -1,0 +1,19 @@
+{
+	"$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+	"name": "agentic-workflow-setup",
+	"version": "0.3.0",
+	"description": "Intent-routed DEFINE, PLAN, BUILD, VERIFY, and lean-context skills with measurable local evaluation.",
+	"author": {
+		"name": "MiuDog",
+		"url": "https://github.com/MiuDog"
+	},
+	"homepage": "https://github.com/MiuDog/agentic-workflow-setup",
+	"repository": "https://github.com/MiuDog/agentic-workflow-setup",
+	"license": "MIT",
+	"keywords": [
+		"agent-skills",
+		"specification",
+		"planning",
+		"evaluation"
+	]
+}

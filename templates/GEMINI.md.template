@@ -1,26 +1,30 @@
-# <專案名> — Gemini/Antigravity 作業入口
+# <專案名> — Gemini / Antigravity 入口
 
-<一句話：這專案是什麼、主要技術棧、程式碼放哪幾個目錄。>
+<一句話說明產品、主要技術棧與 source roots。>
 
-## 你必須遵守的規範（按順序讀）
+## Current truth
 
-1. `.agents/skills/agent-entry/SKILL.md` — 入口：角色判定、任務分型、硬規則（最先讀）。
-2. `.agents/skills/work-protocol/SKILL.md` — 執行紀律與回報合約（所有任務必讀）。
-3. 依任務型態加讀：`task-planning` / `task-development` / `task-delivery`；
-   需求模糊時先讀 `human-intent`。
+- 產品現行規格：<路徑>
+- 專案狀態與目前 slice：<路徑>
+- module 任務與介面：讀 module root 的 `architecture.md`。
 
-## 硬規則摘要（完整版在上述技能）
+## Intent routing
 
-- 完成＝證據（測試輸出尾行、exit code）；同一錯誤最多修兩次。
-- 大檔先內容搜尋定位再分段讀，不整檔讀。
-- 查不到的事實標「未查證」，嚴禁編造 API、路徑、來源。
-- <專案特有硬規則。>
+- 簡略產品想法、新系統或未定義的新行為：讀 `.agents/skills/spec-driven-development/SKILL.md`，只完成 DEFINE。
+- 已有接受且 READY 的單一 module 規格，需要設計架構或 slices：讀 `.agents/skills/planning-and-task-breakdown/SKILL.md`，只規劃目前 stage。
+- 已有完整 Task Packet 的實作：讀 `.agents/skills/incremental-implementation/SKILL.md`；必要新測試由隔離角色另讀 `test-driven-development`。
+- 已有可重現 code failure：讀 `.agents/skills/debugging-and-error-recovery/SKILL.md`，依 Red → Yellow → Green fallback 處理。
+- 長 session、交接、上下文或協調成本問題：讀 `.agents/skills/lean-development/SKILL.md`；它不取代目前 phase owner。
+- 每次只讀目前 intent owner，以及任務確實需要的單一跨切面 owner；不預載整套 skills 或被取代的決策歷史。
 
-## 環境事實
+## Scope and evidence
 
-<OS、工具路徑、建置/測試指令、已知陷阱——實測後填入。>
+- 只修改 Task Packet 的 `write_paths`；`architecture.md`、test-owned paths 與其他 module 都是唯讀或不可見。
+- 跨 module 需求先交回架構負責人更新共通規格，不由 BUILD worker 自行擴張。
+- Agent 只判斷 deterministic code evidence；感官成果由人類接受。
+- 驗證按 Red → Yellow → Green fallback 擴張，不例行跑全量測試。
+- <專案特有硬限制與外部副作用權限。>
 
-## 規則衝突時
+## Environment facts
 
-技能間衝突時，依 `agent-entry` 的「規則衝突裁決」節處理（使用者當下指示 > 本檔 > agent-entry
-與 work-protocol > 各任務型 skill > 模板）；裁決不了就批次問人類，不要自行擇一默默執行。
+<只寫已實測的 OS、工具、建置與局部驗證入口。>

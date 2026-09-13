@@ -1,0 +1,271 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://github.com/MiuDog/agentic-workflow-setup/skills/incremental-implementation/references/task-packet.schema.json",
+	"title": "Module-scoped BUILD Task Packet",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"schema_version",
+		"task_id",
+		"goal",
+		"module_root",
+		"architecture_path",
+		"architecture_revision",
+		"base_revision",
+		"allowed_read",
+		"allowed_write",
+		"forbidden",
+		"contract_excerpts",
+		"acceptance",
+		"test_state",
+		"estimate",
+		"milestones",
+		"experiment"
+	],
+	"properties": {
+		"schema_version": {
+			"const": 1
+		},
+		"task_id": {
+			"type": "string",
+			"minLength": 1
+		},
+		"goal": {
+			"type": "string",
+			"minLength": 10
+		},
+		"module_root": {
+			"$ref": "#/$defs/path"
+		},
+		"architecture_path": {
+			"$ref": "#/$defs/path"
+		},
+		"architecture_revision": {
+			"type": "string",
+			"minLength": 1
+		},
+		"base_revision": {
+			"type": "string",
+			"minLength": 1
+		},
+		"allowed_read": {
+			"type": "array",
+			"minItems": 1,
+			"items": {
+				"$ref": "#/$defs/pathRule"
+			},
+			"uniqueItems": true
+		},
+		"allowed_write": {
+			"type": "array",
+			"minItems": 1,
+			"items": {
+				"$ref": "#/$defs/pathRule"
+			},
+			"uniqueItems": true
+		},
+		"forbidden": {
+			"type": "array",
+			"minItems": 1,
+			"items": {
+				"$ref": "#/$defs/pathRule"
+			},
+			"uniqueItems": true
+		},
+		"contract_excerpts": {
+			"type": "array",
+			"minItems": 1,
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": [
+					"source",
+					"revision",
+					"content"
+				],
+				"properties": {
+					"source": {
+						"$ref": "#/$defs/path"
+					},
+					"revision": {
+						"type": "string",
+						"minLength": 1
+					},
+					"content": {
+						"type": "string",
+						"minLength": 1
+					}
+				}
+			}
+		},
+		"acceptance": {
+			"type": "array",
+			"minItems": 1,
+			"items": {
+				"type": "string",
+				"minLength": 5
+			}
+		},
+		"test_state": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"red",
+				"yellow",
+				"green"
+			],
+			"properties": {
+				"red": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"yellow": {
+					"type": "array",
+					"minItems": 1,
+					"items": {
+						"type": "string"
+					}
+				},
+				"green": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				}
+			}
+		},
+		"estimate": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"basis",
+				"reference_task_ids",
+				"expected_total_tokens",
+				"expected_duration_ms",
+				"assumptions"
+			],
+			"properties": {
+				"basis": {
+					"enum": [
+						"historical",
+						"cold-start"
+					]
+				},
+				"reference_task_ids": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"expected_total_tokens": {
+					"$ref": "#/$defs/range"
+				},
+				"expected_duration_ms": {
+					"$ref": "#/$defs/range"
+				},
+				"assumptions": {
+					"type": "array",
+					"minItems": 1,
+					"items": {
+						"type": "string"
+					}
+				}
+			}
+		},
+		"milestones": {
+			"type": "array",
+			"minItems": 1,
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": [
+					"id",
+					"outcome",
+					"evidence",
+					"expected_cumulative_tokens",
+					"expected_cumulative_duration_ms",
+					"anomaly_threshold"
+				],
+				"properties": {
+					"id": {
+						"type": "string",
+						"minLength": 1
+					},
+					"outcome": {
+						"type": "string",
+						"minLength": 5
+					},
+					"evidence": {
+						"type": "string",
+						"minLength": 5
+					},
+					"expected_cumulative_tokens": {
+						"type": "integer",
+						"minimum": 0
+					},
+					"expected_cumulative_duration_ms": {
+						"type": "integer",
+						"minimum": 0
+					},
+					"anomaly_threshold": {
+						"type": "string",
+						"minLength": 5
+					}
+				}
+			}
+		},
+		"experiment": {
+			"type": [
+				"object",
+				"null"
+			],
+			"additionalProperties": false,
+			"required": [
+				"experiment_id",
+				"variant_id"
+			],
+			"properties": {
+				"experiment_id": {
+					"type": "string",
+					"minLength": 1
+				},
+				"variant_id": {
+					"type": "string",
+					"minLength": 1
+				}
+			}
+		}
+	},
+	"$defs": {
+		"path": {
+			"type": "string",
+			"minLength": 1,
+			"pattern": "^(?![A-Za-z]:)(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+		},
+		"pathRule": {
+			"type": "string",
+			"minLength": 1,
+			"pattern": "^(?![A-Za-z]:)(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^*]+(?:/\\*\\*)?$"
+		},
+		"range": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"low",
+				"high"
+			],
+			"properties": {
+				"low": {
+					"type": "integer",
+					"minimum": 0
+				},
+				"high": {
+					"type": "integer",
+					"minimum": 0
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,179 @@
+{
+	"$schema": "../case.schema.json",
+	"schema_version": 1,
+	"skill": {
+		"name": "incremental-implementation",
+		"path": "skills/incremental-implementation/SKILL.md"
+	},
+	"purpose": "An implementation-ready slice is completed inside its module and Task Packet boundaries without reopening product or architecture decisions.",
+	"owner": "Bounded product implementation for one accepted BUILD slice.",
+	"non_goals": [
+		"Product definition or prioritization",
+		"Module architecture design",
+		"Independent test authorship",
+		"Failure-first diagnosis"
+	],
+	"cases": [
+		{
+			"id": "III-P1",
+			"kind": "positive",
+			"mode": "routing",
+			"prompt": "Task Packet、architecture revision、allowed paths 和驗收都已固定，請實作 src/import 的 CSV parsing slice。",
+			"expected_owner": "incremental-implementation",
+			"selection_rule": "exact",
+			"checks": [
+				{
+					"id": "select-build-owner",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "The incremental implementation skill is selected for the accepted BUILD slice."
+				},
+				{
+					"id": "stay-inside-write-paths",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The worker limits edits to Task Packet write paths and preserves protected architecture and test files."
+				}
+			]
+		},
+		{
+			"id": "III-P2",
+			"kind": "positive",
+			"mode": "routing",
+			"prompt": "架構與公開接口已接受，下一個 slice 是在 game module 加入 deterministic turn resolver，現在開始 BUILD。",
+			"expected_owner": "incremental-implementation",
+			"selection_rule": "exact",
+			"checks": [
+				{
+					"id": "select-build-owner",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "The incremental implementation skill is selected after PLAN is READY."
+				},
+				{
+					"id": "avoid-replanning",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The response implements the current slice without reopening accepted module architecture."
+				}
+			]
+		},
+		{
+			"id": "III-P3",
+			"kind": "positive",
+			"mode": "routing",
+			"prompt": "請依這份有 revision、milestones、write_paths 與 code checks 的封包完成單一 storage adapter slice。",
+			"expected_owner": "incremental-implementation",
+			"selection_rule": "exact",
+			"checks": [
+				{
+					"id": "select-build-owner",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "The bounded BUILD worker is selected for a complete Task Packet."
+				},
+				{
+					"id": "report-milestones-only",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The worker proceeds autonomously and reports only predefined milestone checkpoints, blockers, and final evidence."
+				}
+			]
+		},
+		{
+			"id": "III-N1",
+			"kind": "negative",
+			"mode": "routing",
+			"prompt": "我想做一個遊戲資料系統，但目標使用者、第一版功能和資料所有權都還沒決定。",
+			"expected_owner": "spec-driven-development",
+			"selection_rule": "exclude-target",
+			"checks": [
+				{
+					"id": "exclude-build-owner",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "Implementation is not selected while product intent remains unresolved."
+				}
+			]
+		},
+		{
+			"id": "III-N2",
+			"kind": "negative",
+			"mode": "routing",
+			"prompt": "這個 module 的責任分層、依賴方向和 slices 還沒設計，請先建立 architecture.md。",
+			"expected_owner": "planning-and-task-breakdown",
+			"selection_rule": "exclude-target",
+			"checks": [
+				{
+					"id": "exclude-build-owner",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "Implementation is not selected before module architecture and slices are ready."
+				}
+			]
+		},
+		{
+			"id": "III-C1",
+			"kind": "collision",
+			"mode": "routing",
+			"prompt": "Slice 已實作，但 contract test 現在可重現失敗；請找出原因並修好。",
+			"expected_owner": "debugging-and-error-recovery",
+			"selection_rule": "exclude-target",
+			"checks": [
+				{
+					"id": "route-existing-failure",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "An existing reproducible failure routes to debugging rather than ordinary implementation."
+				}
+			]
+		},
+		{
+			"id": "III-B1",
+			"kind": "behavior",
+			"mode": "behavior",
+			"prompt": "BUILD Task Packet：task III-B1；module root src/data-import；architecture revision abc123；只讀 architecture excerpt 與 public contract；只寫 src/data-import/parser.js；禁止 architecture.md、tests、其他 modules。Slice 要解析 CSV 並回傳逐列錯誤。現有 code checks 是 Yellow，沒有 Red；M1 完成 parsing result，M2 通過 module check。請實作並回報 scope evidence。",
+			"expected_owner": "incremental-implementation",
+			"selection_rule": "exact",
+			"checks": [
+				{
+					"id": "honor-module-boundary",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "All changes remain inside the single allowed implementation path and protected files stay unchanged."
+				},
+				{
+					"id": "implement-only-current-slice",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The result implements the accepted CSV slice without future formats, new architecture, or unrelated cleanup."
+				},
+				{
+					"id": "verify-yellow-then-stop",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The worker verifies the changed Yellow scope and does not run unchanged Green or the full suite without evidence."
+				},
+				{
+					"id": "return-compact-evidence",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The final report contains changed paths, acceptance evidence, checks, scope gate, usage, and blockers without a work diary."
+				}
+			]
+		}
+	]
+}

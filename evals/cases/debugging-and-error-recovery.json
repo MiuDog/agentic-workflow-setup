@@ -1,0 +1,186 @@
+{
+	"$schema": "../case.schema.json",
+	"schema_version": 1,
+	"skill": {
+		"name": "debugging-and-error-recovery",
+		"path": "skills/debugging-and-error-recovery/SKILL.md"
+	},
+	"purpose": "A concrete failure is reproduced and narrowed through evidence before an authorized bounded fix and proportionate verification.",
+	"owner": "Failure-first diagnosis and bounded recovery after a reproducible error exists.",
+	"non_goals": [
+		"Routine verification without failure",
+		"Initial feature implementation",
+		"Product or architecture redesign",
+		"Sensory quality evaluation"
+	],
+	"cases": [
+		{
+			"id": "DER-P1",
+			"kind": "positive",
+			"mode": "routing",
+			"prompt": "Contract test 穩定失敗並附上 command 與輸出，請先重現、定位原因，再做允許範圍內的修正。",
+			"expected_owner": "debugging-and-error-recovery",
+			"selection_rule": "exact",
+			"checks": [
+				{
+					"id": "select-debug-owner",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "The debugging skill is selected after a reproducible failed check exists."
+				},
+				{
+					"id": "reproduce-before-edit",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The original smallest reproducer runs before any product edit."
+				}
+			]
+		},
+		{
+			"id": "DER-P2",
+			"kind": "positive",
+			"mode": "routing",
+			"prompt": "昨天修改後 parser 對空欄位回傳錯誤型別，這個 regression 可以用單一測試重現。",
+			"expected_owner": "debugging-and-error-recovery",
+			"selection_rule": "exact",
+			"checks": [
+				{
+					"id": "select-debug-owner",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "A concrete regression routes directly to failure diagnosis."
+				},
+				{
+					"id": "preserve-expected-result",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The response does not weaken the failing assertion or accepted error contract."
+				}
+			]
+		},
+		{
+			"id": "DER-P3",
+			"kind": "positive",
+			"mode": "routing",
+			"prompt": "Build 在 Windows 出現確定的 module resolution error；請分類是環境、依賴還是產品錯誤並提供證據。",
+			"expected_owner": "debugging-and-error-recovery",
+			"selection_rule": "exact",
+			"checks": [
+				{
+					"id": "select-debug-owner",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "A concrete build failure routes to diagnostic recovery."
+				},
+				{
+					"id": "classify-failure-domain",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The response distinguishes environment, dependency, harness, and product hypotheses before editing."
+				}
+			]
+		},
+		{
+			"id": "DER-N1",
+			"kind": "negative",
+			"mode": "routing",
+			"prompt": "功能已通過所有受影響檢查，請再跑一次整個 repository 確認應該沒問題。",
+			"expected_owner": null,
+			"selection_rule": "exclude-target",
+			"checks": [
+				{
+					"id": "exclude-debug-owner",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "Debugging is not selected when no failure remains and relevant checks already pass."
+				}
+			]
+		},
+		{
+			"id": "DER-N2",
+			"kind": "negative",
+			"mode": "routing",
+			"prompt": "規格和架構都已 READY，沒有任何錯誤；請開始實作新的 import slice。",
+			"expected_owner": "incremental-implementation",
+			"selection_rule": "exclude-target",
+			"checks": [
+				{
+					"id": "exclude-debug-owner",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "Initial implementation routes to the BUILD worker rather than debugging."
+				}
+			]
+		},
+		{
+			"id": "DER-C1",
+			"kind": "collision",
+			"mode": "routing",
+			"prompt": "使用者覺得動畫不夠順，但沒有可重現的程式錯誤；請判斷視覺品質是否通過。",
+			"expected_owner": null,
+			"selection_rule": "exclude-target",
+			"checks": [
+				{
+					"id": "keep-sensory-review-human",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "Subjective sensory feedback stays human-pending until a reproducible program defect exists."
+				}
+			]
+		},
+		{
+			"id": "DER-B1",
+			"kind": "behavior",
+			"mode": "behavior",
+			"prompt": "目前 revision 的 test/import-empty.test.js 可穩定重現：空欄位應回傳 missing-field，實際回傳 invalid-row。Task Packet 只允許修改 src/data-import/parser.js，tests 與 architecture.md 受保護。請診斷並修復；先 Red，再 Yellow，只有錯誤仍存在才測最小 Green dependency。",
+			"expected_owner": "debugging-and-error-recovery",
+			"selection_rule": "exact",
+			"checks": [
+				{
+					"id": "establish-original-red",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The exact existing failure is reproduced and classified before changing parser code."
+				},
+				{
+					"id": "state-supported-cause",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The root-cause statement is falsifiable and supported by evidence from the smallest causal path."
+				},
+				{
+					"id": "preserve-protected-files",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "Only the allowed parser path changes; the test, architecture, requirements, and other modules remain unchanged."
+				},
+				{
+					"id": "use-green-only-as-fallback",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "Green scope is skipped after Red and Yellow pass, or limited to one evidenced dependency if the failure persists."
+				},
+				{
+					"id": "report-recovery-evidence",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The result separates diagnosis, changed paths, Red and Yellow results, any justified Green fallback, scope evidence, and uncertainty."
+				}
+			]
+		}
+	]
+}

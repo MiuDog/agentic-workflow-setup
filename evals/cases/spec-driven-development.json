@@ -1,0 +1,238 @@
+{
+  "$schema": "../case.schema.json",
+  "schema_version": 1,
+  "skill": {
+    "name": "spec-driven-development",
+    "path": "skills/spec-driven-development/SKILL.md"
+  },
+  "purpose": "Improve conversion of compressed product ideas into accepted, prioritized current specifications without prematurely entering planning or implementation.",
+  "owner": "DEFINE-stage product intent, requirement priority, and readiness for technical planning.",
+  "non_goals": [
+    "Technical architecture and module layout",
+    "Implementation task breakdown",
+    "Product code or test implementation",
+    "Subjective polish discussion during 0-to-1 development"
+  ],
+  "cases": [
+    {
+      "id": "SDD-P1",
+      "kind": "positive",
+      "mode": "routing",
+      "prompt": "我想從零做一個讓讀書會成員安排聚會的小系統。第一版只排時間，完整版本之後還會有通知與出席紀錄。",
+      "expected_owner": "spec-driven-development",
+      "selection_rule": "exact",
+      "checks": [
+        {
+          "id": "select-define-owner",
+          "type": "routing",
+          "verifier": "machine",
+          "required": true,
+          "criterion": "The target skill is the top-level selected owner."
+        },
+        {
+          "id": "avoid-sensory-polish",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "The response treats the product as 0-to-1 and does not ask about visual taste, animation feel, or optional polish."
+        },
+        {
+          "id": "capture-module-horizon",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "The response identifies one owning module, its public contracts, and the accepted later capability horizon without designing internal architecture."
+        }
+      ]
+    },
+    {
+      "id": "SDD-P2",
+      "kind": "positive",
+      "mode": "routing",
+      "prompt": "替現有記事功能加分享，我想直接用公開 URL。",
+      "expected_owner": "spec-driven-development",
+      "selection_rule": "exact",
+      "checks": [
+        {
+          "id": "select-define-owner",
+          "type": "routing",
+          "verifier": "machine",
+          "required": true,
+          "criterion": "The target skill is the top-level selected owner."
+        },
+        {
+          "id": "separate-goal-from-solution",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "The response separates sharing as the goal from a public URL as a proposed mechanism and exposes access, revocation, and data visibility as release-impact decisions."
+        }
+      ]
+    },
+    {
+      "id": "SDD-P3",
+      "kind": "positive",
+      "mode": "routing",
+      "prompt": "我們已經談了好幾輪需求，請整理成目前有效的規格並判斷能不能推進。",
+      "expected_owner": "spec-driven-development",
+      "selection_rule": "exact",
+      "checks": [
+        {
+          "id": "select-define-owner",
+          "type": "routing",
+          "verifier": "machine",
+          "required": true,
+          "criterion": "The target skill is the top-level selected owner."
+        },
+        {
+          "id": "current-truth-only",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "The response asks for or produces one current requirement table instead of appending a chronological decision log."
+        }
+      ]
+    },
+    {
+      "id": "SDD-P4",
+      "kind": "positive",
+      "mode": "routing",
+      "prompt": "核心功能已經說清楚，效能優化和配色還沒決定；先整理現在能發布的規格。",
+      "expected_owner": "spec-driven-development",
+      "selection_rule": "exact",
+      "checks": [
+        {
+          "id": "select-define-owner",
+          "type": "routing",
+          "verifier": "machine",
+          "required": true,
+          "criterion": "The target skill is the top-level selected owner."
+        },
+        {
+          "id": "priority-by-release-impact",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "The response classifies non-blocking optimization and color preference as P2 or P3 and does not let them block readiness."
+        }
+      ]
+    },
+    {
+      "id": "SDD-N1",
+      "kind": "negative",
+      "mode": "routing",
+      "prompt": "規格已核准且 READY。請把 P1-LOGIN 拆成可以實作的 module 與 slices。",
+      "expected_owner": "planning-and-task-breakdown",
+      "selection_rule": "exclude-target",
+      "checks": [
+        {
+          "id": "route-to-plan",
+          "type": "routing",
+          "verifier": "machine",
+          "required": true,
+          "criterion": "The request routes to planning-and-task-breakdown rather than the target DEFINE skill."
+        },
+        {
+          "id": "do-not-reopen-product-decisions",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "The response does not repeat DEFINE or reopen already accepted product decisions."
+        }
+      ]
+    },
+    {
+      "id": "SDD-N2",
+      "kind": "negative",
+      "mode": "routing",
+      "prompt": "把 README 裡的拼字 teh 改成 the。",
+      "expected_owner": null,
+      "selection_rule": "exact",
+      "checks": [
+        {
+          "id": "use-no-skill",
+          "type": "routing",
+          "verifier": "machine",
+          "required": true,
+          "criterion": "No skill is selected for the mechanical documentation edit."
+        },
+        {
+          "id": "avoid-spec-ceremony",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "The response does not create a product specification or ask product questions."
+        }
+      ]
+    },
+    {
+      "id": "SDD-C1",
+      "kind": "collision",
+      "mode": "routing",
+      "prompt": "先定義分享行為，接著幫我實作。",
+      "expected_owner": "spec-driven-development",
+      "selection_rule": "exact",
+      "checks": [
+        {
+          "id": "select-define-owner",
+          "type": "routing",
+          "verifier": "machine",
+          "required": true,
+          "criterion": "The target DEFINE skill is selected before implementation skills."
+        },
+        {
+          "id": "respect-phase-gate",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "The response completes only DEFINE and does not preload or begin PLAN or BUILD before readiness and user acceptance."
+        }
+      ]
+    },
+    {
+      "id": "SDD-B1",
+      "kind": "behavior",
+      "mode": "behavior",
+      "prompt": "我們要做讀書會排程 v0.1，這是 0→1，owning module 是 schedule。已確認：主辦人建立標題、日期與 2 到 50 人名額；成員 module 只能透過 invite(code) 報名並收到成功或逐項拒絕原因；重複報名與額滿都必須被拒絕；資料只存在單機。v0.2 已接受通知，v1.0 已接受出席紀錄；不做帳號、付款、配色或動畫。我接受以上範圍。請整理成目前規格，判斷是否 READY；不要規劃實作。",
+      "expected_owner": "spec-driven-development",
+      "selection_rule": "exact",
+      "checks": [
+        {
+          "id": "produce-current-table",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "The response produces a compact current requirement table with stable IDs, target version, P1-to-P3 priority, observable acceptance, and status."
+        },
+        {
+          "id": "define-public-module-contract",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "The response records schedule ownership, the semantic invite interface, and the v0.2-to-v1.0 capability horizon without choosing internal patterns."
+        },
+        {
+          "id": "apply-readiness-gate",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "READY or NOT READY is justified with the checklist and exact blocking P1 IDs rather than an unsupported probability."
+        },
+        {
+          "id": "remain-in-define",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "The response does not design modules, tasks, implementation, or tests."
+        },
+        {
+          "id": "omit-deferred-polish",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "Color and animation remain deferred without sensory acceptance criteria or follow-up discussion."
+        }
+      ]
+    }
+  ]
+}

@@ -1,29 +1,31 @@
-# <專案名> — Agent 作業入口（AGENTS.md）
+# <專案名> — Agent 入口
 
-<一句話：這專案是什麼、主要技術棧、程式碼放哪幾個目錄。>
+<一句話說明產品、主要技術棧與 source roots。>
 
-本檔為通用入口（Codex 等工具原生讀取；CLAUDE.md / GEMINI.md 內容應與本檔一致或直接指向本檔）。
+## Current truth
 
-## 你必須遵守的規範（按順序讀）
+- 產品現行規格：<路徑>
+- 專案狀態與目前 slice：<路徑>
+- 每個 module 的責任與公開介面：讀該 module root 的 `architecture.md`。
+- 歷史與被取代決策不得混入現行規格；需要歷史時才查版本紀錄。
 
-1. `.agents/skills/agent-entry/SKILL.md` — 入口：角色判定、任務分型、硬規則、衝突裁決（最先讀）。
-2. `.agents/skills/work-protocol/SKILL.md` — 執行紀律與回報合約（所有任務必讀）。
-3. 依任務型態加讀：`task-planning` / `task-development` / `task-delivery`；需求模糊先讀 `human-intent`；
-   可派 subagent 的指揮側加讀 `model-dispatch`。
+## Intent routing
 
-## 硬規則摘要（完整版在上述技能）
+- 簡略產品想法、新系統或未定義的新行為：讀 `.agents/skills/spec-driven-development/SKILL.md`，只完成 DEFINE。
+- 已有接受且 READY 的單一 module 規格，需要設計架構或 slices：讀 `.agents/skills/planning-and-task-breakdown/SKILL.md`，只規劃目前 stage。
+- 已有完整 Task Packet 的實作：讀 `.agents/skills/incremental-implementation/SKILL.md`；必要新測試由隔離角色另讀 `test-driven-development`。
+- 已有可重現 code failure：讀 `.agents/skills/debugging-and-error-recovery/SKILL.md`，依 Red → Yellow → Green fallback 處理。
+- 長 session、交接、上下文或協調成本問題：讀 `.agents/skills/lean-development/SKILL.md`；它不取代目前 phase owner。
+- 不要在 session 啟動時預載所有 skills。只載入目前 intent owner，以及任務確實需要的單一跨切面 owner。
 
-- 完成＝證據（測試輸出尾行、exit code、來源引用）；「應該可以」不是完成。
-- 同一錯誤最多修兩次，第三次帶完整失敗軌跡回報或升級。
-- 大檔（>200 行或大小不明）先內容搜尋定位再分段讀，不整檔讀。
-- 查不到的事實標「未查證」，嚴禁編造 API、路徑、來源。
-- <專案特有硬規則：保護分支、凍結標記等。>
+## Scope and evidence
 
-## 環境事實
+- 執行者只能修改 Task Packet 的 `write_paths`，不得修改 `architecture.md`、test-owned paths 或其他 module。
+- 跨 module 變更先停止 BUILD，交由架構負責人更新共通規格與 module contracts。
+- Agent 只判斷 deterministic code evidence；視覺、互動手感與易用性保留給人類接受。
+- 驗證由 Red → Yellow → Green fallback 擴張，不以全量測試作為例行收尾。
+- <專案特有的保護路徑、建置入口、發布權限與外部副作用限制。>
 
-<OS、工具路徑、建置/測試指令、已知陷阱——實測後填入，只增不猜。>
+## Environment facts
 
-## 規則衝突時
-
-依 `agent-entry` 的「規則衝突裁決」節（使用者當下指示 > 本檔 > agent-entry 與 work-protocol
-> 各任務型 skill > 模板）；裁決不了就用 human-intent 的批次提問格式問人類。
+<只寫已實測的 OS、工具、建置與局部驗證入口；不把推測寫成事實。>

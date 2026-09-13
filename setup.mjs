@@ -1,148 +1,313 @@
 #!/usr/bin/env node
-// setup.mjs — agentic-workflow-setup 安裝器（零依賴，Node >=18）
+// setup.mjs — 跨 Agent 平台的零依賴安裝器（Node >=18）。
 //
-// 用法： node setup.mjs [--target <專案目錄>] [--platforms claude,agents,gemini]
-//                       [--dry-run] [--uninstall] [--verify] [--force]
-//
-// 行為：
-//   detect   偵測目標專案有哪些平台目錄（沒有就依 --platforms 建立；預設 claude,agents）
-//   install  複製 skills 與派工模板；入口檔（CLAUDE/AGENTS/GEMINI.md）不存在才從模板建立；
-//            MCP 配置做「非破壞性合併」：只補缺少的 server key，絕不覆蓋既有設定；
-//            自動填 MEMORY_FILE_PATH（三平台指向同一檔）；Windows 自動包 cmd /c。
-//   lockfile 在目標寫 .agentic-workflow.lock.json（套組版本 + 每檔 sha256）。
-//            重跑（升級）時：目標檔 hash == lockfile 記錄 → 安全覆蓋新版；
-//            hash 不符（專案本地改過）→ 保留並列警告，由人裁決。
-//   uninstall 只刪「hash 仍與 lockfile 一致」的檔案；改過的保留；入口檔與 MCP 合併不動（列出提醒）。
-//   verify   對已安裝的 skills 跑 frontmatter/行數/連結檢查（同 scripts/validate.mjs 規則）。
-import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, statSync, rmSync, rmdirSync, copyFileSync } from "node:fs";
-import { join, dirname, resolve } from "node:path";
+// 用法：node setup.mjs [--target <專案目錄>] [--scope project|user]
+//                     [--platforms codex,claude,gemini,antigravity]
+//                     [--tools playwright] [--dry-run] [--uninstall] [--verify] [--force]
+import {
+	copyFileSync,
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	readdirSync,
+	rmdirSync,
+	rmSync,
+	statSync,
+	writeFileSync
+} from "node:fs";
+import { homedir } from "node:os";
+import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 
 const SRC = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
-const opt = (name) => { const i = args.indexOf(`--${name}`); return i >= 0 ? (args[i + 1] ?? true) : undefined; };
+const option = (name) => {
+	const index = args.indexOf(`--${name}`);
+	return index >= 0 ? (args[index + 1] ?? true) : undefined;
+};
 const flag = (name) => args.includes(`--${name}`);
+const splitList = (value) => String(value ?? "")
+	.split(",")
+	.map((item) => item.trim())
+	.filter(Boolean);
 
-const TARGET = resolve(String(opt("target") ?? process.cwd()));
+const PROJECT_TARGET = resolve(String(option("target") ?? process.cwd()));
+const SCOPE = String(option("scope") ?? "project");
+const INSTALL_BASE = SCOPE === "user" ? resolve(homedir()) : PROJECT_TARGET;
 const DRY = flag("dry-run");
+const FORCE = flag("force");
 const VERSION = JSON.parse(readFileSync(join(SRC, "package.json"), "utf8")).version;
-const LOCK = join(TARGET, ".agentic-workflow.lock.json");
+const LOCK = SCOPE === "user"
+	? join(INSTALL_BASE, ".agentic-workflow", "lock.json")
+	: join(INSTALL_BASE, ".agentic-workflow.lock.json");
 const IS_WIN = process.platform === "win32";
-const sha = (p) => createHash("sha256").update(readFileSync(p)).digest("hex");
-const log = (...m) => console.log(DRY ? "[dry-run]" : "[setup]", ...m);
+const log = (...message) => console.log(DRY ? "[dry-run]" : "[setup]", ...message);
+const hashFile = (path) => createHash("sha256").update(readFileSync(path)).digest("hex");
+const safeManagedPath = (path) => {
+	const absolutePath = resolve(INSTALL_BASE, path);
+	if (!absolutePath.startsWith(`${INSTALL_BASE}${sep}`)) throw new Error(`lockfile 路徑超出安裝範圍：${path}`);
+	return absolutePath;
+};
 
-if (TARGET === resolve(SRC)) { console.error("請在目標專案執行，或用 --target 指定（不能裝進套組 repo 自己）。"); process.exit(1); }
-
-// ---------- 平台偵測 ----------
-const wanted = String(opt("platforms") ?? "").split(",").filter(Boolean);
-const detected = ["claude", "agents", "gemini"].filter((p) =>
-  existsSync(join(TARGET, { claude: ".claude", agents: ".agents", gemini: ".gemini" }[p])));
-const platforms = wanted.length ? wanted : (detected.length ? detected : ["claude", "agents"]);
-log(`目標：${TARGET}`);
-log(`平台：${platforms.join(", ")}${detected.length ? `（偵測到：${detected.join(", ")}）` : "（未偵測到既有目錄，將建立）"}`);
-
-// ---------- 安裝計畫 ----------
-function* srcFiles(dir, base = dir) {
-  for (const e of readdirSync(dir)) {
-    const p = join(dir, e);
-    if (statSync(p).isDirectory()) yield* srcFiles(p, base);
-    else yield p.slice(base.length + 1).replace(/\\/g, "/");
-  }
+if (!["project", "user"].includes(SCOPE)) {
+	console.error("--scope 只接受 project 或 user。");
+	process.exit(1);
 }
-const plan = []; // { src, dest }
-const addTree = (srcRoot, destRoot) => { for (const rel of srcFiles(srcRoot)) plan.push({ src: join(srcRoot, rel), dest: join(destRoot, rel) }); };
-if (platforms.includes("claude")) {
-  addTree(join(SRC, "skills"), join(TARGET, ".claude", "skills"));
-  plan.push({ src: join(SRC, "templates/delegation-prompts.md"), dest: join(TARGET, ".claude", "docs", "delegation-prompts.md") });
+if (SCOPE === "project" && PROJECT_TARGET === resolve(SRC)) {
+	console.error("請在消費專案執行，或用 --target 指定；不能把 standalone 安裝進套組 repo 自己。");
+	process.exit(1);
 }
-if (platforms.includes("agents")) {
-  addTree(join(SRC, "skills"), join(TARGET, ".agents", "skills"));
-  plan.push({ src: join(SRC, "templates/delegation-prompts.md"), dest: join(TARGET, ".agents", "delegation-prompts.md") });
+if (SCOPE === "user" && option("target") !== undefined) {
+	console.error("--scope user 固定安裝到使用者目錄，不能同時指定 --target。");
+	process.exit(1);
 }
-const entries = [];
-if (platforms.includes("claude")) entries.push(["templates/CLAUDE.md.template", "CLAUDE.md"]);
-if (platforms.includes("agents")) entries.push(["templates/AGENTS.md.template", "AGENTS.md"], ["templates/GEMINI.md.template", "GEMINI.md"]);
-if (platforms.includes("gemini") && !platforms.includes("agents")) entries.push(["templates/GEMINI.md.template", "GEMINI.md"]);
 
-// ---------- uninstall ----------
+const requestedTools = splitList(option("tools"));
+const unknownTools = requestedTools.filter((name) => name !== "playwright");
+if (unknownTools.length) {
+	console.error(`不支援的外接工具：${unknownTools.join(", ")}。目前支援：playwright`);
+	process.exit(1);
+}
+if (SCOPE === "user" && requestedTools.length) {
+	console.error("--tools 目前只支援 --scope project，以避免無意修改全域 MCP 設定。");
+	process.exit(1);
+}
+
+// `agents` 是 0.2.x 的 Codex 別名；保留相容但不再當成平台名稱。
+const aliases = { agents: "codex" };
+const supportedPlatforms = ["codex", "claude", "gemini", "antigravity"];
+const rawWanted = splitList(option("platforms"));
+const normalizedWanted = rawWanted.map((name) => aliases[name] ?? name);
+const unknownPlatforms = normalizedWanted.filter((name) => !supportedPlatforms.includes(name));
+if (unknownPlatforms.length) {
+	console.error(`不支援的平台：${unknownPlatforms.join(", ")}。目前支援：${supportedPlatforms.join(", ")}`);
+	process.exit(1);
+}
+if (rawWanted.includes("agents")) console.warn("`agents` 已改名為 `codex`；本次仍依相容別名處理。");
+
+const detected = SCOPE === "user" ? [] : [
+	...(existsSync(join(INSTALL_BASE, ".agents")) ? ["codex"] : []),
+	...(existsSync(join(INSTALL_BASE, ".claude")) ? ["claude"] : []),
+	...(existsSync(join(INSTALL_BASE, ".gemini")) ? ["gemini"] : [])
+];
+const platforms = [...new Set(
+	normalizedWanted.length
+		? normalizedWanted
+		: (detected.length ? detected : ["codex", "claude"])
+)];
+
+log(`範圍：${SCOPE}`);
+log(`目標：${INSTALL_BASE}`);
+log(`平台：${platforms.join(", ")}${detected.length ? `（偵測到：${detected.join(", ")}）` : ""}`);
+log(`外接工具：${requestedTools.length ? requestedTools.join(", ") : "無（使用 --tools 明確選用）"}`);
+
+function* sourceFiles(directory, base = directory) {
+	for (const entry of readdirSync(directory)) {
+		const path = join(directory, entry);
+		if (statSync(path).isDirectory()) yield* sourceFiles(path, base);
+		else yield relative(base, path).replaceAll("\\", "/");
+	}
+}
+
+const planByDestination = new Map();
+const addFile = (source, destination) => planByDestination.set(resolve(destination), { source, destination });
+const addTree = (sourceRoot, destinationRoot) => {
+	for (const path of sourceFiles(sourceRoot)) addFile(join(sourceRoot, path), join(destinationRoot, path));
+};
+
+const sharedAgentSkills = platforms.some((name) => ["codex", "gemini", "antigravity"].includes(name));
+if (sharedAgentSkills) addTree(join(SRC, "skills"), join(INSTALL_BASE, ".agents", "skills"));
+if (platforms.includes("claude")) addTree(join(SRC, "skills"), join(INSTALL_BASE, ".claude", "skills"));
+if (SCOPE === "user" && platforms.includes("antigravity")) {
+	addTree(join(SRC, "skills"), join(INSTALL_BASE, ".gemini", "config", "skills"));
+}
+
+if (SCOPE === "project") {
+	if (sharedAgentSkills) {
+		addFile(join(SRC, "templates", "delegation-prompts.md"), join(INSTALL_BASE, ".agents", "delegation-prompts.md"));
+	}
+	if (platforms.includes("claude")) {
+		addFile(join(SRC, "templates", "delegation-prompts.md"), join(INSTALL_BASE, ".claude", "docs", "delegation-prompts.md"));
+	}
+}
+
+const entryTemplates = [];
+if (SCOPE === "project") {
+	if (platforms.includes("codex")) entryTemplates.push(["AGENTS.md.template", "AGENTS.md"]);
+	if (platforms.includes("claude")) entryTemplates.push(["CLAUDE.md.template", "CLAUDE.md"]);
+	if (platforms.some((name) => ["gemini", "antigravity"].includes(name))) {
+		entryTemplates.push(["GEMINI.md.template", "GEMINI.md"]);
+	}
+}
+
 if (flag("uninstall")) {
-  if (!existsSync(LOCK)) { console.error("找不到 lockfile，無法安全移除。"); process.exit(1); }
-  const lock = JSON.parse(readFileSync(LOCK, "utf8"));
-  let removed = 0, kept = 0;
-  const touchedDirs = new Set();
-  for (const [rel, hash] of Object.entries(lock.files)) {
-    const p = join(TARGET, rel);
-    if (!existsSync(p)) continue;
-    if (sha(p) === hash) {
-      if (!DRY) rmSync(p);
-      removed++;
-      for (let d = dirname(p); d.length > TARGET.length; d = dirname(d)) touchedDirs.add(d);
-    } else { console.warn(`保留（本地已修改）：${rel}`); kept++; }
-  }
-  // 清掉因移除而空掉的目錄（由深到淺）；rmdirSync 只刪空目錄，非空會拋錯（此處為預期防護）
-  if (!DRY) for (const d of [...touchedDirs].sort((a, b) => b.length - a.length)) {
-    if (existsSync(d) && readdirSync(d).length === 0) rmdirSync(d);
-  }
-  if (!DRY) rmSync(LOCK);
-  log(`移除 ${removed} 檔，保留 ${kept} 檔（本地修改）。入口檔與 MCP 合併項未動，需要時手動清理。`);
-  process.exit(0);
+	if (!existsSync(LOCK)) {
+		console.error(`找不到 lockfile：${LOCK}`);
+		process.exit(1);
+	}
+
+	const lock = JSON.parse(readFileSync(LOCK, "utf8"));
+	let removed = 0;
+	let kept = 0;
+	const touchedDirectories = new Set();
+	for (const [path, hash] of Object.entries(lock.files)) {
+		const absolutePath = safeManagedPath(path);
+		if (!existsSync(absolutePath)) continue;
+		if (hashFile(absolutePath) !== hash) {
+			console.warn(`保留（本地已修改）：${path}`);
+			kept++;
+			continue;
+		}
+
+		if (!DRY) rmSync(absolutePath);
+		removed++;
+		for (let directory = dirname(absolutePath); directory.length > INSTALL_BASE.length; directory = dirname(directory)) {
+			touchedDirectories.add(directory);
+		}
+	}
+
+	if (!DRY) {
+		for (const directory of [...touchedDirectories].sort((left, right) => right.length - left.length)) {
+			if (existsSync(directory) && readdirSync(directory).length === 0) rmdirSync(directory);
+		}
+		rmSync(LOCK);
+	}
+	log(`移除 ${removed} 檔，保留 ${kept} 檔。入口檔與非破壞性 MCP 合併項未動。`);
+	process.exit(0);
 }
 
-// ---------- install ----------
 const oldLock = existsSync(LOCK) ? JSON.parse(readFileSync(LOCK, "utf8")) : null;
 const newFiles = {};
-let copied = 0, skippedLocal = 0;
-for (const { src, dest } of plan) {
-  const rel = dest.slice(TARGET.length + 1).replace(/\\/g, "/");
-  const srcHash = sha(src);
-  if (existsSync(dest)) {
-    const destHash = sha(dest);
-    const known = oldLock?.files?.[rel];
-    if (destHash === srcHash) { newFiles[rel] = srcHash; continue; }               // 已是最新
-    if (known && destHash !== known && !flag("force")) {                           // 本地改過 → 保留
-      console.warn(`保留本地修改（--force 可覆蓋）：${rel}`);
-      newFiles[rel] = destHash; skippedLocal++; continue;
-    }
-  }
-  if (!DRY) { mkdirSync(dirname(dest), { recursive: true }); copyFileSync(src, dest); }
-  newFiles[rel] = srcHash; copied++;
+let copied = 0;
+let skippedLocal = 0;
+let retired = 0;
+const plannedPaths = new Set([...planByDestination.values()].map(({ destination }) =>
+	relative(INSTALL_BASE, destination).replaceAll("\\", "/")));
+for (const [path, hash] of Object.entries(oldLock?.files ?? {})) {
+	if (plannedPaths.has(path)) continue;
+	const absolutePath = safeManagedPath(path);
+	if (!existsSync(absolutePath)) continue;
+	if (hashFile(absolutePath) !== hash) {
+		console.warn(`保留已退役但被本地修改的檔案：${path}`);
+		newFiles[path] = hashFile(absolutePath);
+		continue;
+	}
+	if (!DRY) rmSync(absolutePath);
+	log(`移除已退役的受管檔案：${path}`);
+	retired++;
 }
-for (const [tpl, name] of entries) {
-  const dest = join(TARGET, name);
-  if (existsSync(dest)) continue; // 入口檔永不覆蓋
-  if (!DRY) copyFileSync(join(SRC, tpl), dest);
-  log(`建立入口檔 ${name}（從模板，請填〈〉佔位符）`);
+for (const { source, destination } of planByDestination.values()) {
+	const path = relative(INSTALL_BASE, destination).replaceAll("\\", "/");
+	const sourceHash = hashFile(source);
+	if (existsSync(destination)) {
+		const destinationHash = hashFile(destination);
+		const knownHash = oldLock?.files?.[path];
+		if (destinationHash === sourceHash) {
+			newFiles[path] = sourceHash;
+			continue;
+		}
+		if (knownHash && destinationHash !== knownHash && !FORCE) {
+			console.warn(`保留本地修改（--force 可覆蓋）：${path}`);
+			newFiles[path] = destinationHash;
+			skippedLocal++;
+			continue;
+		}
+	}
+
+	if (!DRY) {
+		mkdirSync(dirname(destination), { recursive: true });
+		copyFileSync(source, destination);
+	}
+	newFiles[path] = sourceHash;
+	copied++;
 }
 
-// ---------- MCP 非破壞性合併 ----------
-const memPath = join(TARGET, ".agents", "mcp-memory.json").replace(/\//g, IS_WIN ? "\\" : "/");
-const baseCfg = JSON.parse(readFileSync(join(SRC, IS_WIN ? "mcp/mcp-config.windows.example.json" : "mcp/mcp-config.example.json"), "utf8"));
-baseCfg.mcpServers.memory.env.MEMORY_FILE_PATH = memPath;
-const mcpTargets = [];
-if (platforms.includes("claude")) mcpTargets.push(join(TARGET, ".mcp.json"));
-if (platforms.includes("agents")) mcpTargets.push(join(TARGET, ".agents", "mcp_config.json"));
-if (platforms.includes("gemini")) mcpTargets.push(join(TARGET, ".gemini", "settings.json"));
-for (const cfgPath of mcpTargets) {
-  let cfg = {};
-  if (existsSync(cfgPath)) { try { cfg = JSON.parse(readFileSync(cfgPath, "utf8")); } catch { console.warn(`略過（JSON 解析失敗，不動它）：${cfgPath}`); continue; } }
-  cfg.mcpServers ??= {};
-  let added = 0;
-  for (const [k, v] of Object.entries(baseCfg.mcpServers)) if (!cfg.mcpServers[k]) { cfg.mcpServers[k] = v; added++; }
-  if (added && !DRY) { mkdirSync(dirname(cfgPath), { recursive: true }); writeFileSync(cfgPath, JSON.stringify(cfg, null, 2) + "\n"); }
-  log(`MCP ${cfgPath.slice(TARGET.length + 1)}：補 ${added} 個 server（既有設定未動）`);
+for (const [template, filename] of entryTemplates) {
+	const destination = join(INSTALL_BASE, filename);
+	if (existsSync(destination)) continue;
+	if (!DRY) copyFileSync(join(SRC, "templates", template), destination);
+	log(`建立入口檔 ${filename}（只建立一次，請填〈〉佔位符）`);
 }
 
-if (!DRY) writeFileSync(LOCK, JSON.stringify({ version: VERSION, installedAt: new Date().toISOString(), files: newFiles }, null, 2) + "\n");
-log(`完成：複製 ${copied} 檔、保留本地修改 ${skippedLocal} 檔、lockfile v${VERSION}。`);
+function mergeJsonMcp(path, selectedServers) {
+	let config = {};
+	if (existsSync(path)) {
+		try {
+			config = JSON.parse(readFileSync(path, "utf8"));
+		}
+		catch {
+			console.warn(`略過（JSON 解析失敗，不動它）：${path}`);
+			return;
+		}
+	}
+	config.mcpServers ??= {};
+	let added = 0;
+	for (const [name, server] of Object.entries(selectedServers)) {
+		if (config.mcpServers[name]) continue;
+		config.mcpServers[name] = server;
+		added++;
+	}
+	if (added && !DRY) {
+		mkdirSync(dirname(path), { recursive: true });
+		writeFileSync(path, `${JSON.stringify(config, null, "\t")}\n`);
+	}
+	log(`MCP ${relative(INSTALL_BASE, path)}：補 ${added} 個 server（既有 key 未動）`);
+}
 
-// ---------- verify ----------
+function mergeCodexToml(path, selectedServers) {
+	let config = existsSync(path) ? readFileSync(path, "utf8") : "";
+	let added = 0;
+	for (const [name, server] of Object.entries(selectedServers)) {
+		const escapedName = name.replaceAll(".", "\\.");
+		if (new RegExp(`^\\[mcp_servers\\.${escapedName}\\]\\s*$`, "m").test(config)) continue;
+		const command = JSON.stringify(server.command);
+		const argumentsValue = server.args.map((argument) => JSON.stringify(argument)).join(", ");
+		const prefix = config.length && !config.endsWith("\n") ? "\n" : "";
+		config += `${prefix}\n[mcp_servers.${name}]\ncommand = ${command}\nargs = [${argumentsValue}]\n`;
+		added++;
+	}
+	if (added && !DRY) {
+		mkdirSync(dirname(path), { recursive: true });
+		writeFileSync(path, config);
+	}
+	log(`MCP ${relative(INSTALL_BASE, path)}：補 ${added} 個 server（既有 section 未動）`);
+}
+
+if (requestedTools.length) {
+	const platformConfig = JSON.parse(readFileSync(join(SRC, IS_WIN
+		? "mcp/mcp-config.windows.example.json"
+		: "mcp/mcp-config.example.json"), "utf8"));
+	const selectedServers = Object.fromEntries(
+		requestedTools.map((name) => [name, platformConfig.mcpServers[name]])
+	);
+	if (platforms.includes("codex")) mergeCodexToml(join(INSTALL_BASE, ".codex", "config.toml"), selectedServers);
+	if (platforms.includes("claude")) mergeJsonMcp(join(INSTALL_BASE, ".mcp.json"), selectedServers);
+	if (platforms.includes("gemini")) mergeJsonMcp(join(INSTALL_BASE, ".gemini", "settings.json"), selectedServers);
+	if (platforms.includes("antigravity")) mergeJsonMcp(join(INSTALL_BASE, ".agents", "mcp_config.json"), selectedServers);
+}
+
+if (!DRY) {
+	mkdirSync(dirname(LOCK), { recursive: true });
+	writeFileSync(LOCK, `${JSON.stringify({
+		version: VERSION,
+		scope: SCOPE,
+		platforms,
+		installedAt: new Date().toISOString(),
+		files: newFiles
+	}, null, 2)}\n`);
+}
+log(`完成：複製 ${copied} 檔、移除退役 ${retired} 檔、保留本地修改 ${skippedLocal} 檔、lockfile v${VERSION}。`);
+
 if (flag("verify")) {
-  const { spawnSync } = await import("node:child_process");
-  for (const p of platforms.filter((x) => x !== "gemini")) {
-    const dir = join(TARGET, p === "claude" ? ".claude" : ".agents");
-    const r = spawnSync(process.execPath, [join(SRC, "scripts/validate.mjs"), dir], { encoding: "utf8" });
-    console.log(`--- verify ${dir} ---\n${r.stdout}${r.stderr}`);
-    if (r.status !== 0) process.exitCode = 1;
-  }
+	const { spawnSync } = await import("node:child_process");
+	const roots = new Set();
+	if (sharedAgentSkills) roots.add(join(INSTALL_BASE, ".agents"));
+	if (platforms.includes("claude")) roots.add(join(INSTALL_BASE, ".claude"));
+	if (SCOPE === "user" && platforms.includes("antigravity")) roots.add(join(INSTALL_BASE, ".gemini", "config"));
+	for (const root of roots) {
+		const result = spawnSync(process.execPath, [join(SRC, "scripts", "validate.mjs"), root], { encoding: "utf8" });
+		console.log(`--- verify ${root} ---\n${result.stdout}${result.stderr}`);
+		if (result.status !== 0) process.exitCode = 1;
+	}
 }

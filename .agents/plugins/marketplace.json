@@ -1,0 +1,21 @@
+{
+	"name": "agentic-workflow",
+	"interface": {
+		"displayName": "Agentic Workflow"
+	},
+	"plugins": [
+		{
+			"name": "agentic-workflow-setup",
+			"source": {
+				"source": "url",
+				"url": "https://github.com/MiuDog/agentic-workflow-setup.git",
+				"ref": "main"
+			},
+			"policy": {
+				"installation": "AVAILABLE",
+				"authentication": "ON_INSTALL"
+			},
+			"category": "Developer Tools"
+		}
+	]
+}

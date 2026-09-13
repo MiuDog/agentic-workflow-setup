@@ -1,0 +1,221 @@
+{
+  "$schema": "../case.schema.json",
+  "schema_version": 1,
+  "skill": {
+    "name": "planning-and-task-breakdown",
+    "path": "skills/planning-and-task-breakdown/SKILL.md"
+  },
+  "purpose": "Improve conversion of an accepted module specification into a justified, maintainable architecture and current-stage vertical slices without planning future versions.",
+  "owner": "PLAN-stage internal architecture, module contract maintenance, and current-stage task breakdown.",
+  "non_goals": [
+    "Resolving unaccepted product behavior",
+    "Implementing product code or tests",
+    "Redesigning another module's internals",
+    "Planning every capability in the full-version horizon"
+  ],
+  "cases": [
+    {
+      "id": "PTB-P1",
+      "kind": "positive",
+      "mode": "routing",
+      "prompt": "資料管理 module 的規格已 READY：v0.1 匯入 CSV 並保存有效資料，未來接受 JSON 與遠端儲存。請設計目前階段架構。",
+      "expected_owner": "planning-and-task-breakdown",
+      "selection_rule": "exact",
+      "checks": [
+        {
+          "id": "select-plan-owner",
+          "type": "routing",
+          "verifier": "machine",
+          "required": true,
+          "criterion": "The planning skill is the top-level selected owner."
+        },
+        {
+          "id": "use-horizon-without-planning-it",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "The response uses accepted future formats and storage as design pressure but plans only v0.1."
+        }
+      ]
+    },
+    {
+      "id": "PTB-P2",
+      "kind": "positive",
+      "mode": "routing",
+      "prompt": "使用者已接受新的匯入格式，請維護 data-import module 的 architecture.md 並規劃這一階段。",
+      "expected_owner": "planning-and-task-breakdown",
+      "selection_rule": "exact",
+      "checks": [
+        {
+          "id": "select-plan-owner",
+          "type": "routing",
+          "verifier": "machine",
+          "required": true,
+          "criterion": "The planning skill is the top-level selected owner."
+        },
+        {
+          "id": "replace-current-contract",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "The response updates the current module contract rather than appending a competing architecture decision."
+        }
+      ]
+    },
+    {
+      "id": "PTB-P3",
+      "kind": "positive",
+      "mode": "routing",
+      "prompt": "規格已核准，請把目前 P1 對應到 module responsibility、公開 contract 與可驗證 slices。",
+      "expected_owner": "planning-and-task-breakdown",
+      "selection_rule": "exact",
+      "checks": [
+        {
+          "id": "select-plan-owner",
+          "type": "routing",
+          "verifier": "machine",
+          "required": true,
+          "criterion": "The planning skill is the top-level selected owner."
+        },
+        {
+          "id": "map-p1-to-slices",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "Every current P1 maps to an owner, contract when applicable, vertical slice, and acceptance evidence."
+        }
+      ]
+    },
+    {
+      "id": "PTB-N1",
+      "kind": "negative",
+      "mode": "routing",
+      "prompt": "我想做一個資料管理系統，但還不知道要給誰用或第一版要解決什麼。",
+      "expected_owner": "spec-driven-development",
+      "selection_rule": "exclude-target",
+      "checks": [
+        {
+          "id": "exclude-plan-owner",
+          "type": "routing",
+          "verifier": "machine",
+          "required": true,
+          "criterion": "The planning skill is not selected before product intent is defined."
+        },
+        {
+          "id": "return-to-define",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "The response routes unresolved users and release goals back to DEFINE instead of inventing architecture."
+        }
+      ]
+    },
+    {
+      "id": "PTB-N2",
+      "kind": "negative",
+      "mode": "routing",
+      "prompt": "module、architecture.md、allowed paths 和驗收都已確定，請實作 CSV parser 這個 slice。",
+      "expected_owner": "incremental-implementation",
+      "selection_rule": "exclude-target",
+      "checks": [
+        {
+          "id": "exclude-plan-owner",
+          "type": "routing",
+          "verifier": "machine",
+          "required": true,
+          "criterion": "The planning skill is not selected for implementation-ready work."
+        },
+        {
+          "id": "do-not-replan",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "The response does not reopen architecture that is already accepted and implementation-ready."
+        }
+      ]
+    },
+    {
+      "id": "PTB-C1",
+      "kind": "collision",
+      "mode": "routing",
+      "prompt": "規格已 READY，幫我設計資料 module，然後直接開始寫 parser。",
+      "expected_owner": "planning-and-task-breakdown",
+      "selection_rule": "exact",
+      "checks": [
+        {
+          "id": "select-plan-owner",
+          "type": "routing",
+          "verifier": "machine",
+          "required": true,
+          "criterion": "The planning skill is selected before implementation."
+        },
+        {
+          "id": "respect-plan-gate",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "The response finishes the current-stage architecture and PLAN readiness gate without beginning BUILD."
+        }
+      ]
+    },
+    {
+      "id": "PTB-B1",
+      "kind": "behavior",
+      "mode": "behavior",
+      "prompt": "規格 READY。Owning module 是 src/data-import。v0.1 P1：讀取 CSV、拒絕缺欄與重複 ID、把有效記錄保存到本機；公開接口只接受 import(file) 並回傳成功筆數與逐列錯誤。v0.2 已接受 JSON；v1.0 已接受遠端儲存。其他 module 只能用此公開接口。使用者偏好小型明確物件、依賴方向可直接閱讀。請只規劃 v0.1、建立 module architecture，判斷 PLAN 是否 READY；不要實作。",
+      "expected_owner": "planning-and-task-breakdown",
+      "selection_rule": "exact",
+      "checks": [
+        {
+          "id": "plan-current-stage-only",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "The plan contains only v0.1 slices while recording v0.2 and v1.0 solely as architecture pressure."
+        },
+        {
+          "id": "justify-responsibilities",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "Parser, DTO, entity, repository, or collapsed alternatives are chosen only when their distinct change reasons or invariants justify them."
+        },
+        {
+          "id": "preserve-module-boundary",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "The architecture keeps other modules behind the accepted public interface and does not inspect or redesign their internals."
+        },
+        {
+          "id": "produce-module-contract",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "The result creates or updates src/data-import/architecture.md with current truth and current-stage vertical slices."
+        },
+        {
+          "id": "apply-plan-readiness",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "PLAN readiness is justified by P1 ownership, contracts, slices, evidence, dependency direction, and resolved architecture decisions."
+        },
+        {
+          "id": "estimate-task-cost-before-dispatch",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "Each implementation task has a pre-dispatch token and elapsed-time range based on comparable task IDs, or is explicitly marked cold-start with model and tool assumptions."
+        },
+        {
+          "id": "define-coherent-milestones",
+          "type": "behavior",
+          "verifier": "evaluator",
+          "required": true,
+          "criterion": "Implementation work is divided into a small number of observable milestones with evidence, cumulative token and time expectations, and anomaly thresholds; milestones are not individual files or commands."
+        }
+      ]
+    }
+  ]
+}

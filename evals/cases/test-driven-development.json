@@ -1,0 +1,179 @@
+{
+	"$schema": "../case.schema.json",
+	"schema_version": 1,
+	"skill": {
+		"name": "test-driven-development",
+		"path": "skills/test-driven-development/SKILL.md"
+	},
+	"purpose": "A fresh Test Author creates only the minimal deterministic checks needed to protect an accepted concrete risk before implementation.",
+	"owner": "Independent authorship of necessary executable code checks.",
+	"non_goals": [
+		"Product implementation",
+		"Routine coverage expansion",
+		"Visual or experiential scoring",
+		"Product and architecture decisions"
+	],
+	"cases": [
+		{
+			"id": "TDD-P1",
+			"kind": "positive",
+			"mode": "routing",
+			"prompt": "這次修改牽涉交易回滾，請先由獨立測試角色寫最小 deterministic contract test。",
+			"expected_owner": "test-driven-development",
+			"selection_rule": "exact",
+			"checks": [
+				{
+					"id": "select-test-author",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "The independent test-author skill is selected for transaction risk."
+				},
+				{
+					"id": "protect-transaction-behavior",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The test directly observes the accepted rollback behavior without coupling to implementation calls."
+				}
+			]
+		},
+		{
+			"id": "TDD-P2",
+			"kind": "positive",
+			"mode": "routing",
+			"prompt": "這是可重現的儲存資料遺失 regression，請先建立會失敗的最小測試與 fixture。",
+			"expected_owner": "test-driven-development",
+			"selection_rule": "exact",
+			"checks": [
+				{
+					"id": "select-test-author",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "The independent test-author skill is selected for a data-loss regression."
+				},
+				{
+					"id": "establish-valid-red",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The failing check demonstrates the accepted behavior rather than a broken harness or missing dependency."
+				}
+			]
+		},
+		{
+			"id": "TDD-P3",
+			"kind": "positive",
+			"mode": "routing",
+			"prompt": "請替已接受的 C ABI 邊界撰寫獨立 contract checks，產品實作者不得修改測試。",
+			"expected_owner": "test-driven-development",
+			"selection_rule": "exact",
+			"checks": [
+				{
+					"id": "select-test-author",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "The independent test-author skill is selected for a cross-language contract."
+				},
+				{
+					"id": "record-protected-hash",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The handoff records protected test paths, command, expected evidence, and a stable diff or content hash."
+				}
+			]
+		},
+		{
+			"id": "TDD-N1",
+			"kind": "negative",
+			"mode": "routing",
+			"prompt": "這只是 README 拼字修正，請順便把整個 repository 的測試覆蓋率補到百分之百。",
+			"expected_owner": null,
+			"selection_rule": "exclude-target",
+			"checks": [
+				{
+					"id": "exclude-test-author",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "The test-author skill is not selected for unrelated coverage expansion."
+				}
+			]
+		},
+		{
+			"id": "TDD-N2",
+			"kind": "negative",
+			"mode": "routing",
+			"prompt": "請替新動畫建立 pixel golden 和模型評分，判斷操作手感是否足夠流暢。",
+			"expected_owner": null,
+			"selection_rule": "exclude-target",
+			"checks": [
+				{
+					"id": "exclude-sensory-tests",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "Sensory quality is left to human review instead of being converted into agent-authored tests."
+				}
+			]
+		},
+		{
+			"id": "TDD-C1",
+			"kind": "collision",
+			"mode": "routing",
+			"prompt": "必要測試已由獨立角色寫好並有 Red 證據，請依 Task Packet 實作產品程式讓它通過。",
+			"expected_owner": "incremental-implementation",
+			"selection_rule": "exclude-target",
+			"checks": [
+				{
+					"id": "route-product-worker",
+					"type": "routing",
+					"verifier": "machine",
+					"required": true,
+					"criterion": "Work routes to implementation once protected tests and accepted requirements already exist."
+				}
+			]
+		},
+		{
+			"id": "TDD-B1",
+			"kind": "behavior",
+			"mode": "behavior",
+			"prompt": "Accepted behavior：save() 必須以 atomic replacement 防止中途失敗破壞原檔；public contract 與 test harness 已提供。你是 fresh-context Test Author，只能寫 tests/save-atomic.test.js，不得讀實作者推理或修改產品。請建立最小保護、取得 Red 證據並交接。",
+			"expected_owner": "test-driven-development",
+			"selection_rule": "exact",
+			"checks": [
+				{
+					"id": "stay-test-only",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "Only the assigned test-owned path changes; product, architecture, and acceptance files remain untouched."
+				},
+				{
+					"id": "observe-public-risk",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The test observes preservation of the original file through the public contract and does not mirror private implementation structure."
+				},
+				{
+					"id": "produce-red-evidence",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The exact narrow command fails for the expected behavioral reason rather than a harness error."
+				},
+				{
+					"id": "handoff-protected-test",
+					"type": "behavior",
+					"verifier": "evaluator",
+					"required": true,
+					"criterion": "The handoff names protected behavior, paths, fixture ownership, command, evidence, and stable test hash."
+				}
+			]
+		}
+	]
+}

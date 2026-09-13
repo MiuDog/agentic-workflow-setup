@@ -8,8 +8,12 @@
 ## 提交檢查（PR 前本地跑）
 
 ```bash
-node scripts/validate.mjs        # frontmatter / 行數上限 / 連結存在性
-node setup.mjs --target <臨時目錄> --verify   # 安裝器端到端
+npm run validate                # skill、case、manifest、連結與 MCP 契約
+npm run test:registry           # recorder／validator 整合流程
+npm run test:scope              # BUILD module write boundary 整合流程
+node scripts/analyze-task-registry.mjs self-test
+node setup.mjs --target <臨時目錄> --platforms codex,claude,gemini,antigravity --verify
+gh skill publish --dry-run      # 需要 GitHub CLI 與 repository 存取
 ```
 
 CI 會跑同一組檢查；紅燈不收。

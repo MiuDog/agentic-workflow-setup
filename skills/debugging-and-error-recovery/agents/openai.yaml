@@ -1,0 +1,7 @@
+interface:
+  display_name: "Debugging and error recovery"
+  short_description: "Diagnose failures with bounded evidence-driven checks"
+  brand_color: "#2563EB"
+  default_prompt: "Use $debugging-and-error-recovery to reproduce and diagnose this failed code behavior before changing it."
+policy:
+  allow_implicit_invocation: true

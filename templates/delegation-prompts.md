@@ -1,63 +1,78 @@
-# 派工 Prompt 填空模板
+# Task Packet 模板
 
-用法：指揮官複製對應模板、填 `〔〕`、派給 subagent。規則見 `model-dispatch` skill。
-每份已內建三件套（目標與動機/驗收條件/回報格式），缺一段不要送出。
-通用尾註（每份結尾保留）：
+只在任務值得承擔重新建立上下文的成本時委派。主 agent 一次派發完整 Task Packet；worker 在預先定義的小階段完成時回報 checkpoint，不進行無 evidence 的例行進度對話。
 
 ```text
-環境注意：〔OS、工具路徑陷阱——從專案環境文件抄〕。
-規範：先讀 〔.agents/skills 或 .claude/skills〕/work-protocol/SKILL.md 並遵守其執行紀律；
-回報格式以本派工單的【回報】段為準（它是回報合約的任務特化版，此覆寫是合約明文允許的）。
-大檔先搜尋定位再分段讀；查不到的事實標「未查證」。
+task_id: <穩定識別碼>
+goal: <本 slice 的單一可觀察成果>
+module_root: <worker 唯一可操作的 module root>
+architecture_path: <module_root>/architecture.md
+architecture_revision: <revision 或 hash>
+
+read_paths:
+- <完成任務所需的最小來源>
+
+write_paths:
+- <module_root 內允許修改的精確路徑或 pattern>
+
+forbidden_paths:
+- <module_root>/architecture.md
+- <test-owned paths>
+- <其他 module 與 repository 管理檔>
+
+contract_excerpts:
+- <本 slice 實際需要的共通介面與不變量；不要轉貼整份人類討論>
+
+acceptance:
+- <deterministic code evidence>
+- <若有感官成果：只要求產出 artifact，標為 human-pending，不替人類評分>
+
+test_state:
+- red: <已知可重現失敗，沒有則寫 none>
+- yellow: <本 revision 改動與直接受影響範圍>
+- green: <已有通過證據且未改動的範圍>
+
+estimate:
+- basis: <historical|cold-start>
+- reference_task_ids: <可比較歷史 task；cold-start 可為空>
+- expected_total_tokens: <low..high>
+- expected_elapsed_seconds: <low..high，dispatch 到 final>
+- assumptions: <model、reasoning、tools、task complexity>
+
+milestones:
+- id: <M1>
+  outcome: <完成後可觀察的小階段成果>
+  evidence: <如何證明完成>
+  expected_cumulative_tokens: <上界>
+  expected_cumulative_seconds: <上界>
+  anomaly_threshold: <何時交 Process Evaluator 立即修正流程>
+
+experiment:
+- id: <沒有 A/B 則為 none>
+- variant: <A|B>
+- hypothesis: <只改變一個流程因素>
+
+final_report:
+- changed_paths
+- acceptance_evidence
+- unresolved_blockers
+- scope_gate_result
 ```
 
-## 1. 搜尋/定位（唯讀型 agent；機械匹配用小模型，其餘中模型）
+## Milestone checkpoint
 
 ```text
-【目標】找出〔要找的東西〕。【動機】〔為什麼找、找到後要幹嘛〕。
-【範圍】優先搜〔目錄〕；廣度：〔快速/徹底〕。
-【驗收】每個結果附 檔案:行號；明說「找完了」或「哪些目錄沒搜＋原因」。
-【回報】每處一行（路徑:行號＋一句是什麼）＋最後一行整體觀察。不貼代碼段。
+CHECKPOINT <milestone_id>
+evidence: <最小證據>
+changed_paths: <清單>
+actual_cumulative_tokens: <provider usage；估算時註明方法>
+actual_elapsed_seconds: <dispatch 起算>
+estimate_deviation: <within-range|over|under + 數值>
+next_milestone: <id>
 ```
 
-## 2. 實作（通用型 agent，中模型；跨端契約先派大模型出設計）
+Checkpoint 是單向狀態證據，不是請求逐步核准。Process Evaluator 只檢查流程；沒有 anomaly 時主 agent 不回覆，worker 直接進下一 milestone。
 
-```text
-【目標】實作〔功能〕，依據：〔計畫文件路徑或內嵌需求〕。【動機】〔在整體的位置〕。
-【硬限制】只准動〔白名單路徑〕；遇到〔凍結標記/保護區〕停止回報，不繞過；在特性分支工作。
-【驗收】〔功能點逐條可測〕；lint 零 error；受影響測試全過；新邏輯有新測試；diff 全在白名單。
-【回報】驗收逐條 過/不過；測試輸出尾 5 行原文；變更檔案清單;假設與風險 ≤3 條。
-計畫沒寫的小歧義：選影響最小方案繼續，記入假設欄，不要停下來等。
-```
+## 唯一允許的中途 blocker
 
-## 3. 重構（通用型 agent，中模型）
-
-```text
-【目標】重構〔目標〕。【動機】〔違反哪條規範/哪個痛點〕。
-【硬限制】行為不變：先跑測試記基線再動手；〔行數/單類別等專案規範〕；凍結區一字不動。
-【驗收】基線測試前後皆全過（貼兩次尾行）;無新增 lint 警告；〔結構目標，例：每檔 ≤200 行〕。
-【回報】拆分對照表（舊→新）；前後測試尾行；未竟事項 ≤3 條。
-```
-
-## 4. 研究/查證（帶網路或文件工具的 agent，中模型）
-
-```text
-【目標】查證〔問題〕。【動機】〔這答案決定什麼〕。
-【驗收】每個結論附來源（URL/文件版本/原始碼路徑）；「文件說的」與「我推論的」分開標；查不到寫「未查證」。
-【回報】結論 ≤5 行放最前；來源清單；建議一句。超過 20 行的整理落檔給路徑。
-```
-
-## 5. 審查/驗收（fresh-context！prompt 不夾帶實作者結論）
-
-```text
-【目標】獨立驗收：〔變更範圍/檔案清單/分支〕。
-【驗收條件】〔逐條列出。只給條件，不說實作者自稱都過了〕。
-【方法】檔案類逐檔 read-back（完整性/引用路徑存在/規則矛盾）；代碼類親自跑 lint 與測試，以你跑出的為準。
-【回報】問題按嚴重度排序（位置/問題/修法一句）；總判定：可收/退回（附最小修復清單）。
-找不到問題時，列出你檢查了什麼，不要只說「沒問題」。
-```
-
-## 送出前自查
-
-模型指定了嗎／驗收條件是可檢查的句子嗎／背景全給了嗎（subagent 看不到你的對話）／
-是「找出問題」不是「確認沒問題」嗎／一個派工只有一個目標嗎。
+只有缺少會改變驗收的決策、需要修改 forbidden path、共通契約不足、或需要未授權的外部副作用時，worker 才送出一次結構化 blocker：說明卡點、證據、最小所需決策與不擴張時可完成的範圍。派工者更新權威檔案與 revision 後，重新發出 Task Packet；不要用聊天補丁否定舊決策。

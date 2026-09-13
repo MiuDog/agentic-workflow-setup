@@ -1,0 +1,7 @@
+interface:
+  display_name: "Test-driven development"
+  short_description: "Author independent tests for a concrete code risk"
+  brand_color: "#2563EB"
+  default_prompt: "Use $test-driven-development to author the minimal independent code checks for this accepted risk."
+policy:
+  allow_implicit_invocation: true

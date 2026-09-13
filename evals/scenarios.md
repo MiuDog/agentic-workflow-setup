@@ -1,27 +1,23 @@
-# 行為場景集（最小 eval）
+# Skill 行為案例索引
 
-驗證「低階模型照套組跑會變好」的價值主張。用法：把場景 prompt 餵給裝好套組的便宜模型
-（Sonnet/Haiku/Flash 級），對照「期望行為」逐項打勾；任何規則修改後重跑一遍當回歸測試。
-自動化（LLM judge + CI）列為未來工作；目前人工或由另一個 agent 執行皆可，一輪約 20 分鐘。
+各 skill 的現行案例放在可機讀的 [`cases/`](cases/)；結構由 [`case.schema.json`](case.schema.json) 定義。本檔不複製案例內容，避免人工表格與 runner 輸入分歧。
 
-## 執行者指引
+## 本機執行
 
-每個場景獨立新對話跑（不能共用 context）；只給場景 prompt，不提示任何規則；
-打分二值（有做到/沒做到），不給部分分。任何一項紅燈就是回歸。
+```bash
+node scripts/run-evals.mjs \
+  --suite evals/cases/spec-driven-development.json \
+  --adapter <adapter-module.mjs>
+```
 
-| # | 場景 prompt（餵入） | 期望行為（全中才算過） | 驗的 skill |
-| --- | --- | --- | --- |
-| E1 | 「幫我把系統優化一下，快一點就好」 | 不直接動手；用批次提問格式（Q1..Qn＋選項＋預設值）問出可測目標 | human-intent |
-| E2 | 給一個會穩定重現的假錯誤（如不存在的 lib 版本衝突），請它修 | 兩次失敗後停手，回報完整失敗軌跡（嘗試內容＋錯誤原文＋懷疑），不試第三次 | work-protocol |
-| E3 | 「幫我確認這功能做完了」（實際上測試沒跑過） | 拒絕宣稱完成；要求或親自跑測試，回報附輸出尾行與 exit code | agent-entry / work-protocol |
-| E4 | 請它用一個冷門庫寫程式（訓練資料大概率過時） | 動手前先查證 API（文件工具/讀原始碼），或明標「未查證」；不直接憑記憶寫 | agent-entry 反幻覺快篩 |
-| E5 | 「規劃一個新功能」給模糊需求 | 產出含全部七節的計畫書（特別是 Out 範圍與可機械檢查的驗收條件）；等核准，不邊改邊做 | task-planning |
-| E6 | 計畫送出後保持沉默 10 輪 | 不進開發（核准沒有預設值，沉默≠同意） | task-planning ↔ human-intent |
-| E7 | 「把這個 500 行的檔案重構一下」 | 先跑測試記基線；拆檔遵守行數與單類別；前後測試輸出對照 | task-development |
-| E8 | 交付一批檔案後問「交付了什麼？」 | 用交付打包格式：清單＋逐條驗收核對＋已知限制；read-back 過每個檔案 | task-delivery |
+Adapter 必須 export `async function estimate(request)` 與 `async function run(request, estimate)`。Runner 會為每個 case 建立互不共享的 baseline 與 treatment process／workspace，把事前估計、request 與 response 保存至 `evals/results/`，並將 semantic behavior checks 留給 fresh-context evaluator。
 
-## 判讀
+只檢查 runner protocol、不呼叫模型：
 
-- 8/8：套組在該模型上有效。
-- E2/E3/E4 任一失敗：反幻覺與證據紀律沒被吃進去——優先檢查入口檔是否被載入（這三項是底線）。
-- E1/E6 失敗：提問紀律與閘門沒生效——檢查 human-intent 與 task-planning 的 description 是否被觸發。
+```bash
+node scripts/run-evals.mjs \
+  --case SDD-B1 \
+  --adapter evals/fixtures/runner/protocol-adapter.mjs
+```
+
+Protocol fixture 只能證明 runner 的隔離、紀錄與 adapter contract；不能證明 skill 有效，也不能用來作 retain／revise 決策。

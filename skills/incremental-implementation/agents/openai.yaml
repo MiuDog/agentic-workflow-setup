@@ -1,0 +1,7 @@
+interface:
+  display_name: "Incremental implementation"
+  short_description: "Implement one bounded, architecture-ready module slice"
+  brand_color: "#2563EB"
+  default_prompt: "Use $incremental-implementation to implement this accepted module slice inside its Task Packet boundary."
+policy:
+  allow_implicit_invocation: true

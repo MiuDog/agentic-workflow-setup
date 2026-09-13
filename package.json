@@ -1,21 +1,27 @@
 {
-  "name": "agentic-workflow-setup",
-  "version": "0.2.1",
-  "description": "Portable agentic workflow kit: entry skills, anti-hallucination discipline, task-type protocols, model dispatch rules, and MCP setup for Claude Code / Antigravity / Codex / Gemini",
-  "type": "module",
-  "bin": {
-    "agentic-workflow-setup": "./setup.mjs"
-  },
-  "scripts": {
-    "validate": "node scripts/validate.mjs",
-    "setup": "node setup.mjs"
-  },
-  "engines": {
-    "node": ">=18"
-  },
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/M4ng0D0g/agentic-workflow-setup.git"
-  }
+	"name": "agentic-workflow-setup",
+	"version": "0.3.0",
+	"description": "Portable intent-routed DEFINE, PLAN, BUILD, VERIFY, and lean-development skills with measurable local evaluation",
+	"type": "module",
+	"bin": {
+		"agentic-workflow-setup": "./setup.mjs"
+	},
+	"scripts": {
+		"analyze:tasks": "node scripts/analyze-task-registry.mjs",
+		"eval": "node scripts/run-evals.mjs",
+		"registry": "node scripts/task-registry.mjs",
+		"test:registry": "node scripts/test-task-registry.mjs",
+		"test:scope": "node scripts/test-task-scope.mjs",
+		"validate": "node scripts/validate.mjs",
+		"validate:skills:official": "gh skill publish --dry-run",
+		"setup": "node setup.mjs"
+	},
+	"engines": {
+		"node": ">=18"
+	},
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/MiuDog/agentic-workflow-setup.git"
+	}
 }

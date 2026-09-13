@@ -1,0 +1,59 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://github.com/MiuDog/agentic-workflow-setup/evals/task-evaluation.schema.json",
+	"title": "Independent task process evaluation",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"schema_version",
+		"task_id",
+		"result",
+		"anomalies"
+	],
+	"properties": {
+		"schema_version": {
+			"const": 1
+		},
+		"task_id": {
+			"type": "string",
+			"minLength": 1
+		},
+		"result": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"status",
+				"acceptance_passed",
+				"scope_violation_count",
+				"rework_count"
+			],
+			"properties": {
+				"status": {
+					"enum": [
+						"completed",
+						"failed",
+						"blocked",
+						"protocol-deviation"
+					]
+				},
+				"acceptance_passed": {
+					"type": "boolean"
+				},
+				"scope_violation_count": {
+					"type": "integer",
+					"minimum": 0
+				},
+				"rework_count": {
+					"type": "integer",
+					"minimum": 0
+				}
+			}
+		},
+		"anomalies": {
+			"type": "array",
+			"items": {
+				"$ref": "task-registry.schema.json#/$defs/anomaly"
+			}
+		}
+	}
+}

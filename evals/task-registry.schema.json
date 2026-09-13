@@ -1,0 +1,943 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MiuDog/agentic-workflow-setup/evals/task-registry.schema.json",
+  "title": "Task cost history and cross-task process experiments",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "tasks",
+    "experiments"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 3
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/task"
+      }
+    },
+    "experiments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/experiment"
+      }
+    }
+  },
+  "$defs": {
+    "nonNegativeRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "low",
+        "high"
+      ],
+      "properties": {
+        "low": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "high": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "model",
+        "reasoning",
+        "tools",
+        "permissions"
+      ],
+      "properties": {
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reasoning": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "estimate": {
+      "type": "object",
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "basis": {
+                "const": "historical"
+              }
+            },
+            "required": [
+              "basis"
+            ]
+          },
+          "then": {
+            "properties": {
+              "reference_task_ids": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ],
+      "required": [
+        "basis",
+        "reference_task_ids",
+        "assumptions",
+        "expected_total_tokens",
+        "expected_duration_ms"
+      ],
+      "properties": {
+        "basis": {
+          "enum": [
+            "historical",
+            "cold-start"
+          ]
+        },
+        "reference_task_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "assumptions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "expected_total_tokens": {
+          "$ref": "#/$defs/nonNegativeRange"
+        },
+        "expected_duration_ms": {
+          "$ref": "#/$defs/nonNegativeRange"
+        }
+      }
+    },
+    "actual": {
+      "type": "object",
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "token_measurement": {
+                "enum": [
+                  "provider",
+                  "estimated"
+                ]
+              }
+            },
+            "required": [
+              "token_measurement"
+            ]
+          },
+          "then": {
+            "anyOf": [
+              {
+                "properties": {
+                  "total_tokens": {
+                    "type": "integer"
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "input_tokens": {
+                    "type": "integer"
+                  },
+                  "output_tokens": {
+                    "type": "integer"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "token_measurement": {
+                "const": "estimated"
+              }
+            },
+            "required": [
+              "token_measurement"
+            ]
+          },
+          "then": {
+            "properties": {
+              "token_estimation_method": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ],
+      "required": [
+        "input_tokens",
+        "output_tokens",
+        "total_tokens",
+        "token_measurement",
+        "token_estimation_method",
+        "duration_ms"
+      ],
+      "properties": {
+        "input_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "output_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "total_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "token_measurement": {
+          "enum": [
+            "provider",
+            "estimated",
+            "unavailable"
+          ]
+        },
+        "token_estimation_method": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "cohort": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_type",
+        "product_stage",
+        "complexity_band",
+        "module"
+      ],
+      "properties": {
+        "task_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "product_stage": {
+          "enum": [
+            "DEFINE",
+            "PLAN",
+            "BUILD",
+            "VERIFY",
+            "OTHER"
+          ]
+        },
+        "complexity_band": {
+          "enum": [
+            "xs",
+            "s",
+            "m",
+            "l",
+            "xl"
+          ]
+        },
+        "module": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "milestone": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "evidence",
+        "changed_paths",
+        "expected_cumulative_tokens",
+        "expected_cumulative_duration_ms",
+        "actual_cumulative_tokens",
+        "elapsed_ms",
+        "deviation"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "completed",
+            "blocked",
+            "skipped"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "changed_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "expected_cumulative_tokens": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/nonNegativeRange"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expected_cumulative_duration_ms": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/nonNegativeRange"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "actual_cumulative_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "elapsed_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "deviation": {
+          "enum": [
+            "under",
+            "within-range",
+            "over",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "anomaly": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "severity",
+        "type",
+        "detected_at_milestone",
+        "evidence",
+        "process_action"
+      ],
+      "properties": {
+        "severity": {
+          "enum": [
+            "hard",
+            "soft"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "detected_at_milestone": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence": {
+          "type": "string",
+          "minLength": 1
+        },
+        "process_action": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "experimentAssignment": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "experiment_id",
+        "variant_id"
+      ],
+      "properties": {
+        "experiment_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "variant_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "cohort": {
+                "properties": {
+                  "product_stage": {
+                    "const": "BUILD"
+                  }
+                },
+                "required": [
+                  "product_stage"
+                ]
+              },
+              "result": {
+                "properties": {
+                  "status": {
+                    "const": "completed"
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            },
+            "required": [
+              "cohort",
+              "result"
+            ]
+          },
+          "then": {
+            "properties": {
+              "milestones": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ],
+      "required": [
+        "task_id",
+        "recorded_at",
+        "started_at",
+        "completed_at",
+        "cohort",
+        "execution",
+        "estimate",
+        "actual",
+        "result",
+        "milestones",
+        "anomalies",
+        "experiment",
+        "evidence_paths"
+      ],
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recorded_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "cohort": {
+          "$ref": "#/$defs/cohort"
+        },
+        "execution": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/execution"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "estimate": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/estimate"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "actual": {
+          "$ref": "#/$defs/actual"
+        },
+        "result": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "acceptance_passed",
+            "scope_violation_count",
+            "rework_count"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "completed",
+                "failed",
+                "blocked",
+                "protocol-deviation"
+              ]
+            },
+            "acceptance_passed": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "scope_violation_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "rework_count": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "milestones": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/milestone"
+          }
+        },
+        "anomalies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/anomaly"
+          }
+        },
+        "experiment": {
+          "$ref": "#/$defs/experimentAssignment"
+        },
+        "evidence_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "metric": {
+      "enum": [
+        "total_tokens",
+        "duration_ms",
+        "success_rate",
+        "scope_violation_count",
+        "rework_count",
+        "hard_anomaly_rate"
+      ]
+    },
+    "experiment": {
+      "type": "object",
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "draft",
+                  "active"
+                ]
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "conclusion": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "concluded"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "conclusion": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      ],
+      "required": [
+        "experiment_id",
+        "status",
+        "hypothesis",
+        "single_process_factor",
+        "cohort_rules",
+        "variables_held_constant",
+        "variants",
+        "primary_metric",
+        "secondary_metrics",
+        "safety_metrics",
+        "assignment_method",
+        "alpha",
+        "power",
+        "minimum_practical_effect",
+        "minimum_tasks_per_variant",
+        "sample_size_basis",
+        "analysis_method",
+        "bootstrap_iterations",
+        "random_seed",
+        "stopping_rule",
+        "conclusion"
+      ],
+      "properties": {
+        "experiment_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "active",
+            "stopped",
+            "concluded"
+          ]
+        },
+        "hypothesis": {
+          "type": "string",
+          "minLength": 10
+        },
+        "single_process_factor": {
+          "type": "string",
+          "minLength": 5
+        },
+        "cohort_rules": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "variables_held_constant": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "variants": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "description"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "type": "string",
+                "minLength": 5
+              }
+            }
+          }
+        },
+        "primary_metric": {
+          "$ref": "#/$defs/metric"
+        },
+        "secondary_metrics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/metric"
+          },
+          "uniqueItems": true
+        },
+        "safety_metrics": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/metric"
+          },
+          "uniqueItems": true
+        },
+        "assignment_method": {
+          "const": "stratified-random"
+        },
+        "alpha": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "exclusiveMaximum": 1
+        },
+        "power": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "exclusiveMaximum": 1
+        },
+        "minimum_practical_effect": {
+          "type": "number",
+          "minimum": 0
+        },
+        "minimum_tasks_per_variant": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "sample_size_basis": {
+          "type": "object",
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "metric_family": {
+                    "const": "continuous"
+                  }
+                },
+                "required": [
+                  "metric_family"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "sigma": {
+                    "type": "number"
+                  },
+                  "baseline_rate": {
+                    "type": "null"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "metric_family": {
+                    "const": "binary"
+                  }
+                },
+                "required": [
+                  "metric_family"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "sigma": {
+                    "type": "null"
+                  },
+                  "baseline_rate": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          ],
+          "required": [
+            "metric_family",
+            "historical_task_ids",
+            "sigma",
+            "baseline_rate",
+            "calculation"
+          ],
+          "properties": {
+            "metric_family": {
+              "enum": [
+                "continuous",
+                "binary"
+              ]
+            },
+            "historical_task_ids": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "sigma": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "exclusiveMinimum": 0
+            },
+            "baseline_rate": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1
+            },
+            "calculation": {
+              "type": "string",
+              "minLength": 10
+            }
+          }
+        },
+        "analysis_method": {
+          "const": "fixed-horizon-stratified-bootstrap"
+        },
+        "bootstrap_iterations": {
+          "type": "integer",
+          "minimum": 1000
+        },
+        "random_seed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "stopping_rule": {
+          "type": "string",
+          "minLength": 10
+        },
+        "conclusion": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "required": [
+            "decision",
+            "effect",
+            "evidence_task_ids",
+            "limitations"
+          ],
+          "properties": {
+            "decision": {
+              "enum": [
+                "retain-control",
+                "adopt-treatment",
+                "inconclusive",
+                "stop-for-safety"
+              ]
+            },
+            "effect": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "estimate",
+                "ci_low",
+                "ci_high",
+                "confidence_level"
+              ],
+              "properties": {
+                "estimate": {
+                  "type": "number"
+                },
+                "ci_low": {
+                  "type": "number"
+                },
+                "ci_high": {
+                  "type": "number"
+                },
+                "confidence_level": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "exclusiveMaximum": 1
+                }
+              }
+            },
+            "evidence_task_ids": {
+              "type": "array",
+              "minItems": 2,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "limitations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

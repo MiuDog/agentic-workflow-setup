@@ -1,39 +1,30 @@
-# <專案名> — Agent 作業入口
+# <專案名> — Claude 入口
 
-<一句話：這專案是什麼、主要技術棧、程式碼放哪幾個目錄。>
+<一句話說明產品、主要技術棧與 source roots。>
 
-## 規則優先序（衝突時依此裁決）
+## Current truth
 
-1. 使用者當下的明確指示
-2. 本檔案（CLAUDE.md）
-3. `.claude/skills/` 各 SKILL.md（技能間衝突時，依 `agent-entry` 的「規則衝突裁決」節處理；裁決不了就批次問人類）
+- 產品現行規格：<路徑>
+- 專案狀態與目前 slice：<路徑>
+- module 任務與介面：讀 module root 的 `architecture.md`。
 
-## Session 啟動程序
+## Intent routing
 
-1. 讀 `agent-entry` skill：判定角色與任務類型，載入對應規範。
-2. <專案任務來源，例：讀 docs/plan/ 的待實作區確認當前任務。>
-3. <開工前檢查，例：查問題日誌有無未解決的阻斷項。>
+- 簡略產品想法、新系統或未定義的新行為：讀 `.claude/skills/spec-driven-development/SKILL.md`，只完成 DEFINE。
+- 已有接受且 READY 的單一 module 規格，需要設計架構或 slices：讀 `.claude/skills/planning-and-task-breakdown/SKILL.md`，只規劃目前 stage。
+- 已有完整 Task Packet 的實作：讀 `.claude/skills/incremental-implementation/SKILL.md`；必要新測試由隔離角色另讀 `test-driven-development`。
+- 已有可重現 code failure：讀 `.claude/skills/debugging-and-error-recovery/SKILL.md`，依 Red → Yellow → Green fallback 處理。
+- 長 session、交接、上下文或協調成本問題：讀 `.claude/skills/lean-development/SKILL.md`；它不取代目前 phase owner。
+- 每次只讀目前 intent owner，以及任務確實需要的單一跨切面 owner；不預載整套 skills 或被取代的決策歷史。
 
-## 硬規則（無例外）
+## Scope and evidence
 
-- 完成＝證據（測試輸出原文、exit code）；「應該可以」不是完成。
-- 同一錯誤最多修兩次，第三次帶完整失敗軌跡回報或升級（model-dispatch）。
-- 大檔案先 grep 定位再分段讀，禁止整檔讀入主對話：<列出本專案的大檔，例：logs/、TRACKING.md>
-- 查不到的事實標「未查證」，嚴禁編造。
-- <專案特有硬規則，例：保護分支清單、凍結代碼標記規則。>
+- 只修改 Task Packet 的 `write_paths`；`architecture.md`、test-owned paths 與其他 module 都是唯讀或不可見。
+- 跨 module 需求先交回架構負責人更新共通規格，不由 BUILD worker 自行擴張。
+- Agent 只判斷 deterministic code evidence；感官成果由人類接受。
+- 驗證按 Red → Yellow → Green fallback 擴張，不例行跑全量測試。
+- <專案特有硬限制與外部副作用權限。>
 
-## 任務路由表
+## Environment facts
 
-| 你正在做的事 | 讀這份 |
-| --- | --- |
-| 不確定從哪開始 | `agent-entry` skill |
-| 需求模糊 / 要問人類 | `human-intent` skill |
-| 規劃新功能 | `task-planning` skill |
-| 寫代碼 / 修 bug | `task-development` skill |
-| 寫文件 / 發版本 / 交付 | `task-delivery` skill |
-| 派 subagent | `model-dispatch` skill + `.claude/docs/delegation-prompts.md` |
-| 建置測試指令、環境陷阱 | <docs/environment.md ——首次探勘後把事實沉澱到這裡> |
-
-## 環境事實
-
-<首次 session 實測後填入：OS、工具路徑、建置/測試指令、已知陷阱。之後只增不猜。>
+<只寫已實測的 OS、工具、建置與局部驗證入口。>

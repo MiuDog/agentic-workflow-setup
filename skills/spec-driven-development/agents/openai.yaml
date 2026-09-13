@@ -1,0 +1,7 @@
+interface:
+  display_name: "Spec-driven development"
+  short_description: "Convert rough intent into one accepted module spec"
+  brand_color: "#2563EB"
+  default_prompt: "Use $spec-driven-development to turn this rough product idea into a READY module specification."
+policy:
+  allow_implicit_invocation: true

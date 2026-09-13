@@ -1,0 +1,88 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://github.com/MiuDog/agentic-workflow-setup/evals/cohort-packet.schema.json",
+	"title": "Runner result cohort assignment packet",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"schema_version",
+		"defaults"
+	],
+	"properties": {
+		"schema_version": {
+			"const": 1
+		},
+		"defaults": {
+			"$ref": "#/$defs/assignment"
+		},
+		"tasks": {
+			"type": "object",
+			"additionalProperties": {
+				"$ref": "#/$defs/assignmentOverride"
+			}
+		}
+	},
+	"$defs": {
+		"cohort": {
+			"$ref": "task-registry.schema.json#/$defs/cohort"
+		},
+		"assignment": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"cohort"
+			],
+			"properties": {
+				"cohort": {
+					"$ref": "#/$defs/cohort"
+				},
+				"experiment": {
+					"$ref": "task-registry.schema.json#/$defs/experimentAssignment"
+				}
+			}
+		},
+		"assignmentOverride": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"cohort": {
+					"type": "object",
+					"additionalProperties": false,
+					"properties": {
+						"task_type": {
+							"type": "string",
+							"minLength": 1
+						},
+						"product_stage": {
+							"enum": [
+								"DEFINE",
+								"PLAN",
+								"BUILD",
+								"VERIFY",
+								"OTHER"
+							]
+						},
+						"complexity_band": {
+							"enum": [
+								"xs",
+								"s",
+								"m",
+								"l",
+								"xl"
+							]
+						},
+						"module": {
+							"type": [
+								"string",
+								"null"
+							]
+						}
+					}
+				},
+				"experiment": {
+					"$ref": "task-registry.schema.json#/$defs/experimentAssignment"
+				}
+			}
+		}
+	}
+}
